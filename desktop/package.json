@@ -1,0 +1,54 @@
+{
+  "name": "melody-desktop",
+  "productName": "Melody",
+  "version": "3.0.0",
+  "description": "Melody – Musik, die dich mitnimmt. Werbefrei.",
+  "author": "Melody",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "prepare-app": "bash ../tools/build-demo.sh desktop/app",
+    "start": "npm run prepare-app && electron .",
+    "dist:win": "npm run prepare-app && electron-builder --win --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "38.2.0",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "app.melody.desktop",
+    "productName": "Melody",
+    "copyright": "Melody",
+    "files": [
+      "main.js",
+      "app/**/*",
+      "!app/sw.js"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Melody",
+      "language": "1031",
+      "artifactName": "Melody-Setup-${version}.exe"
+    },
+    "publish": null
+  }
+}

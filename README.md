@@ -170,6 +170,23 @@ Ohne Stripe-Schlüssel läuft ein **Testmodus**: Abos und Gutscheine lassen sich
 
 Tests: `npm test` (33 Tests für Konten, Abos, Gutscheine, Stripe-Webhooks, KI-Anfrage, Sicherheit, Song-Erkennung und Tempo-Messung).
 
+### 🪟 Melody für Windows (Setup.exe)
+Melody gibt es als installierbares Windows-Programm (Ordner `desktop/`, gebaut mit Electron):
+
+```bash
+cd desktop
+npm install
+npm run dist:win      # erzeugt desktop/dist/Melody-Setup-3.0.0.exe
+npm start             # zum Ausprobieren direkt starten
+```
+
+- Das Setup fragt nach dem Installationsordner und legt eine Verknüpfung auf dem Desktop und im Startmenü an. Deinstallieren geht über „Apps & Features“.
+- Melody läuft im eigenen Fenster, auch ohne Internet. Bibliothek, Playlists und Einstellungen bleiben nach dem Neustart erhalten. F11 = Vollbild.
+- Medientasten der Tastatur und die Windows-Medienanzeige steuern die Musik. Links zu anderen Seiten öffnen sich im normalen Browser.
+- Diese erste Version läuft eigenständig wie die Demo: Konto und Abo werden auf dem PC simuliert, Melody Connect braucht den Server.
+- Das Setup ist noch nicht digital signiert. Windows SmartScreen zeigt deshalb beim ersten Start „Der Computer wurde durch Windows geschützt“: auf **Weitere Informationen → Trotzdem ausführen** klicken. Für den Verkauf ein Code-Signing-Zertifikat kaufen (ca. 200–400 €/Jahr) und in `desktop/package.json` eintragen.
+- Unter Linux braucht der Build zusätzlich Wine (`apt install wine64`); unter Windows reicht `npm run dist:win`.
+
 ### Demo ohne Server
 `tools/build-demo.sh` baut eine Version, bei der Konten und Zahlungen im Browser simuliert werden. Sie eignet sich zum Vorführen und lässt sich auf jedem statischen Hosting (z. B. GitHub Pages) betreiben.
 
@@ -256,6 +273,7 @@ js/recap.js                Melody-Rückblick (Hörstatistik, Story, Bild zum Tei
 js/connect.js              Melody Connect: Geräte sehen, fernsteuern, Musik mitnehmen
 js/kids.js                 Kinder-Modus mit Eltern-PIN, Zeitlimit, Gehörschutz
 js/a11y.js                 Barrierefreiheit, Ansagen, Ziehen zum Sortieren, Wischgesten
+desktop/                   Windows-Programm (Electron, Setup.exe)
 legal/                     Impressum, AGB, Datenschutz, Widerruf (Vorlagen)
 server/config.js           ★ Preise, Testphase, KI-Limit
 server/index.js            HTTP-Server & API
