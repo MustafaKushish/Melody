@@ -1,8 +1,9 @@
 // Offline support: the app shell is cached; everything else (radio API, streams) goes to the network.
-const CACHE = 'melody-v1';
+const CACHE = 'melody-v2';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/style.css',
   'js/app.js', 'js/db.js', 'js/icons.js', 'js/player.js', 'js/tags.js',
+  'js/core.js', 'js/api.js', 'js/account.js', 'js/lyrics.js', 'js/foryou.js', 'js/studio.js',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
 ];
 
@@ -21,7 +22,9 @@ self.addEventListener('activate', (e) => {
 // Network first for our own files (so updates show up), cache as fallback when offline.
 self.addEventListener('fetch', (e) => {
   const req = e.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  const url = new URL(req.url);
+  // Account, payments, AI and lyrics always go to the server, never to the cache.
+  if (req.method !== 'GET' || url.origin !== location.origin || url.pathname.includes('/api/')) return;
   if (req.headers.has('range')) return;
   e.respondWith(
     fetch(req)

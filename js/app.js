@@ -1,57 +1,17 @@
 import { db, uid } from './db.js';
 import { readTags, readDuration } from './tags.js';
-import { player, BANDS, EQ_PRESETS, shuffled, isIOS } from './player.js';
+import { player, shuffled, isIOS } from './player.js';
 import { icon, hydrateIcons, setIcon } from './icons.js';
+import { ensureAccess, renderAccountChip, viewPremium, viewAccount, afterAccountRender, accountActions, accountForms } from './account.js';
+import { lyricsActions, lyricsForms, onLyricsInput, onTrackChange, updateSingState, onNowPlayingOpen, closeSing, isSingOpen, attachLrcFiles, editLyricsSheet, openSing } from './lyrics.js';
+import { viewForYou, forYouActions, forYouForms, MOODS } from './foryou.js';
+import { viewStudio, afterStudioRender, studioActions, onStudioInput, reportPreset } from './studio.js';
+import {
+  $, esc, fmt, fmtLong, hue, plural, byText, toast, state, hooks, getTrack, go,
+  coverUrl, coverHTML, groupCover, setRangeP, openSheet, closeSheet, promptSheet, confirmSheet,
+} from './core.js';
 
-const VERSION = '1.0.0';
-
-// ---------- Helpers ----------
-const $ = (s, r = document) => r.querySelector(s);
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const fmt = (sec) => {
-  if (!isFinite(sec) || sec < 0) sec = 0;
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = String(Math.floor(sec % 60)).padStart(2, '0');
-  return h ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
-};
-const fmtLong = (sec) => {
-  const h = Math.floor(sec / 3600);
-  const m = Math.round((sec % 3600) / 60);
-  return h ? `${h} Std. ${m} Min.` : `${m} Min.`;
-};
-const hue = (str) => {
-  let h = 0;
-  for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) % 360;
-  return h;
-};
-const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-const byText = (a, b) => a.localeCompare(b, 'de', { sensitivity: 'base' });
-
-let toastTimer;
-function toast(msg, sticky = false) {
-  const el = $('#toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(toastTimer);
-  if (!sticky) toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
-}
-
-// ---------- State ----------
-const state = {
-  tracks: [],
-  playlists: [],
-  map: new Map(),
-  covers: new Map(),
-  lists: {},
-  route: { view: 'home', param: '' },
-  libQuery: '',
-  libSort: 'title',
-  radio: { results: [], loading: false, query: '', tag: '', error: '', loaded: false },
-  stations: new Map(),
-  menu: null,
-  installPrompt: null,
-};
+const VERSION = '2.0.0';
 
 const UI_KEY = 'melody.ui';
 const ui = (() => {
@@ -69,28 +29,6 @@ let radioFavs = (() => {
 })();
 const saveRadioFavs = () => localStorage.setItem(RADIO_FAV_KEY, JSON.stringify(radioFavs));
 
-function coverUrl(t) {
-  if (!t || !t.cover) return null;
-  let u = state.covers.get(t.id);
-  if (!u) {
-    u = URL.createObjectURL(t.cover);
-    state.covers.set(t.id, u);
-  }
-  return u;
-}
-
-function coverHTML(t, size = '', seed) {
-  const u = coverUrl(t);
-  if (u) return `<div class="cover ${size}"><img src="${u}" alt="" loading="lazy" decoding="async"></div>`;
-  return `<div class="cover ${size}" style="--h:${hue(seed ?? t?.album ?? '')}">${icon('note')}</div>`;
-}
-
-function groupCover(tracks, size, seed, ico = 'note', round = false) {
-  const withCover = tracks.find((t) => t.cover);
-  if (withCover) return coverHTML(withCover, size + (round ? ' round' : ''));
-  return `<div class="cover ${size}${round ? ' round' : ''}" style="--h:${hue(seed)}">${icon(ico)}</div>`;
-}
-
 // ---------- Data ----------
 async function loadAll() {
   const [tracks, playlists] = await Promise.all([db.all('tracks'), db.all('playlists')]);
@@ -99,7 +37,6 @@ async function loadAll() {
   state.map = new Map(tracks.map((t) => [t.id, t]));
 }
 
-const getTrack = (id) => state.map.get(id);
 
 function albums() {
   const m = new Map();
@@ -140,28 +77,31 @@ const MIXES = [
 
 // ---------- Navigation ----------
 const NAV = [
-  { id: 'home', label: 'Start', icon: 'home' },
-  { id: 'library', label: 'Bibliothek', icon: 'library' },
+  { id: 'home', label: 'Start', icon: 'home', mobile: true },
+  { id: 'foryou', label: 'Für dich', icon: 'sparkle', mobile: true },
+  { id: 'library', label: 'Bibliothek', icon: 'library', mobile: true },
   { id: 'playlists', label: 'Playlists', icon: 'playlist' },
-  { id: 'radio', label: 'Radio', icon: 'radio' },
+  { id: 'radio', label: 'Radio', icon: 'radio', mobile: true },
+  { id: 'studio', label: 'Sound-Studio', icon: 'tune' },
+  { id: 'account', label: 'Konto & Abo', icon: 'account' },
   { id: 'settings', label: 'Einstellungen', icon: 'settings' },
 ];
 
 function renderNav() {
-  const html = NAV.map((n) => `<button class="nav-item" data-action="nav" data-view="${n.id}">${icon(n.icon)}<span>${n.label}</span></button>`).join('');
-  $('#side-nav').innerHTML = html;
-  $('#bottom-nav').innerHTML = html.replace('Einstellungen', 'Mehr');
+  const item = (n) => `<button class="nav-item" data-action="nav" data-view="${n.id}">${icon(n.icon)}<span>${n.label}</span></button>`;
+  $('#side-nav').innerHTML = NAV.map(item).join('');
+  $('#bottom-nav').innerHTML = NAV.filter((n) => n.mobile).map(item).join('') + item({ id: 'more', label: 'Mehr', icon: 'grid' });
 }
 
-function go(view, param = '') {
-  const hash = `#/${view}${param ? '/' + encodeURIComponent(param) : ''}`;
-  if (location.hash !== hash) location.hash = hash;
-  else render();
+function viewMore() {
+  return `<h1>Mehr</h1><div class="more-list">${NAV.filter((n) => !n.mobile).map((n) =>
+    `<button class="sheet-item" data-action="nav" data-view="${n.id}">${icon(n.icon)}${n.label}</button>`).join('')}</div>`;
 }
 
 function parseRoute() {
-  const [view, ...rest] = location.hash.replace(/^#\/?/, '').split('/');
-  state.route = { view: view || 'home', param: decodeURIComponent(rest.join('/') || '') };
+  const [path, query = ''] = location.hash.replace(/^#\/?/, '').split('?');
+  const [view, ...rest] = path.split('/');
+  state.route = { view: view || 'home', param: decodeURIComponent(rest.join('/') || ''), query: new URLSearchParams(query) };
 }
 
 const VIEWS = {
@@ -173,6 +113,11 @@ const VIEWS = {
   playlist: viewPlaylist,
   radio: viewRadio,
   settings: viewSettings,
+  foryou: viewForYou,
+  studio: viewStudio,
+  premium: viewPremium,
+  account: viewAccount,
+  more: viewMore,
 };
 
 function render() {
@@ -183,7 +128,7 @@ function render() {
   const main = $('#main');
   main.innerHTML = fn();
   hydrateIcons(main);
-  const navView = { album: 'library', artist: 'library', playlist: 'playlists' }[view] || view;
+  const navView = { album: 'library', artist: 'library', playlist: 'playlists', premium: 'account' }[view] || view;
   document.querySelectorAll('.nav-item').forEach((el) => el.classList.toggle('active', el.dataset.view === navView));
   afterRender(view);
 }
@@ -195,6 +140,8 @@ function afterRender(view) {
     else renderRadioList();
   }
   if (view === 'settings') updateStorageInfo();
+  if (view === 'account') afterAccountRender();
+  if (view === 'studio') afterStudioRender();
 }
 
 // ---------- Shared fragments ----------
@@ -298,6 +245,11 @@ function viewHome() {
       <div class="stat"><b>${fmtLong(total)}</b><span>Musik</span></div>
       <div class="stat"><b>${plays}</b><span>Wiedergaben</span></div>
     </div>
+    <section class="ai-banner">
+      <div><span class="ai-badge">${icon('sparkle')} KI</span><h2>Wonach ist dir gerade?</h2>
+        <p>Melody kennt deinen Geschmack und stellt dir in Sekunden den passenden Mix zusammen.</p></div>
+      <div class="tabs">${Object.entries(MOODS).slice(0, 6).map(([name, m]) => `<button class="chip" data-action="ai-mood" data-mood="${name}">${m.emoji} ${name}</button>`).join('')}</div>
+    </section>
     <h2>Smart-Mixe</h2>
     <div class="grid">${MIXES.map((m) => {
       const n = m.ids().length;
@@ -513,21 +465,6 @@ function viewRadio() {
 // ---------- Settings ----------
 const ACCENTS = ['#8b5cf6', '#6366f1', '#3b82f6', '#06b6d4', '#14b8a6', '#22c55e', '#eab308', '#f97316', '#ef4444', '#ec4899'];
 
-function eqPanel() {
-  const s = player.settings;
-  return `<div class="panel" id="eq">
-    <h3>Equalizer</h3>
-    <p>Forme deinen Sound mit 10 Frequenzbändern.${!s.fx ? ' Aktiviere zuerst die Audio-Effekte.' : ''}</p>
-    <div class="setting"><span>Equalizer aktiv</span>
-      <label class="switch"><input type="checkbox" data-setting="eqOn" ${s.eqOn ? 'checked' : ''}><span></span></label></div>
-    <div class="presets">${Object.keys(EQ_PRESETS).map((p) => `<button class="chip${s.preset === p ? ' on' : ''}" data-action="eq-preset" data-preset="${p}">${p}</button>`).join('')}</div>
-    <div class="eq${s.eqOn ? '' : ' off'}">${BANDS.map((f, i) => `
-      <label class="eq-band"><span>${s.eq[i] > 0 ? '+' : ''}${s.eq[i]}</span>
-        <input type="range" min="-12" max="12" step="1" value="${s.eq[i]}" data-band="${i}" aria-label="${f} Hz">
-        <span>${f >= 1000 ? f / 1000 + 'k' : f}</span></label>`).join('')}</div>
-  </div>`;
-}
-
 function viewSettings() {
   const s = player.settings;
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
@@ -554,7 +491,10 @@ function viewSettings() {
         ${[0.5, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2].map((r) => `<option value="${r}"${s.rate === r ? ' selected' : ''}>${String(r).replace('.', ',')}×</option>`).join('')}
       </select></div>
     </div>
-    ${eqPanel()}
+    <div class="panel"><h3>Sound-Studio</h3><p>Melody-Sound, Equalizer, DJ-Effekte und Übergänge zwischen Songs.</p>
+      <button class="btn" data-action="nav" data-view="studio">${icon('tune')}Sound-Studio öffnen</button></div>
+    <div class="panel"><h3>Konto & Abo</h3><p>${esc(state.account?.email || '')}</p>
+      <button class="btn" data-action="nav" data-view="account">${icon('account')}Konto verwalten</button></div>
     <div class="panel"><h3>Bibliothek & Speicher</h3>
       <p id="storage-info">${plural(state.tracks.length, 'Titel', 'Titel')} gespeichert.</p>
       <div class="row">
@@ -587,43 +527,6 @@ function applyTheme() {
   $('meta[name=theme-color]').content = dark ? '#0f0f14' : '#f6f6fa';
 }
 
-// ---------- Sheets ----------
-let sheetResolve = null;
-function openSheet(html) {
-  const sheet = $('#sheet');
-  sheet.innerHTML = html;
-  hydrateIcons(sheet);
-  sheet.hidden = false;
-  $('#sheet-backdrop').hidden = false;
-  const first = sheet.querySelector('input, button');
-  if (first && first.tagName === 'INPUT') setTimeout(() => first.focus(), 50);
-}
-function closeSheet(result = null) {
-  $('#sheet').hidden = true;
-  $('#sheet-backdrop').hidden = true;
-  state.menu = null;
-  if (sheetResolve) {
-    const r = sheetResolve;
-    sheetResolve = null;
-    r(result);
-  }
-}
-
-function promptSheet(title, value = '', ok = 'Speichern') {
-  openSheet(`<h3>${esc(title)}</h3><form data-form="prompt">
-    <input class="input" name="v" value="${esc(value)}" maxlength="100" required autocomplete="off">
-    <div class="row" style="justify-content:flex-end"><button type="button" class="btn" data-action="close-sheet">Abbrechen</button>
-    <button class="btn btn-primary">${esc(ok)}</button></div></form>`);
-  return new Promise((res) => { sheetResolve = res; });
-}
-
-function confirmSheet(text, ok = 'Löschen') {
-  openSheet(`<h3>${esc(text)}</h3><form data-form="confirm"><div class="row" style="justify-content:flex-end">
-    <button type="button" class="btn" data-action="close-sheet">Abbrechen</button>
-    <button class="btn btn-primary" style="background:var(--danger)">${esc(ok)}</button></div></form>`);
-  return new Promise((res) => { sheetResolve = res; });
-}
-
 function sheetHead(t) {
   return `<div class="sheet-head">${coverHTML(t, 'sm')}<div class="meta"><div class="t">${esc(t.title)}</div><div class="a">${esc(t.artist)} · ${esc(t.album)}</div></div></div>`;
 }
@@ -636,11 +539,13 @@ function trackMenu(id, playlistId, index) {
   openSheet(`${sheetHead(t)}
     ${item('m-next', 'playNext', 'Als Nächstes abspielen')}
     ${item('m-queue', 'queue', 'Zur Warteschlange hinzufügen')}
+    ${item('m-sing', 'mic', 'Mitsingen')}
     ${item('m-add-pl', 'add', 'Zu Playlist hinzufügen')}
     ${item('m-fav', t.favorite ? 'heart' : 'heartOutline', t.favorite ? 'Aus Lieblingssongs entfernen' : 'Zu Lieblingssongs', t.favorite ? 'on' : '')}
     ${item('m-album', 'album', 'Zum Album')}
     ${item('m-artist', 'person', 'Zum Künstler')}
     ${item('m-edit', 'edit', 'Infos bearbeiten')}
+    ${item('m-lyrics', 'lyrics', 'Lyrics bearbeiten')}
     ${playlistId ? item('m-remove-pl', 'close', 'Aus dieser Playlist entfernen') : ''}
     ${item('m-delete', 'delete', 'Vom Gerät löschen', 'danger')}`);
 }
@@ -756,7 +661,14 @@ const AUDIO_EXT = /\.(mp3|m4a|m4b|aac|flac|ogg|oga|opus|wav|webm|weba|aiff?|caf)
 const isAudio = (f) => (f.type && f.type.startsWith('audio/')) || AUDIO_EXT.test(f.name);
 
 async function importFiles(fileList) {
-  const files = [...fileList].filter(isAudio);
+  const all = [...fileList];
+  const lrc = all.filter((f) => /\.lrc$/i.test(f.name));
+  const files = all.filter(isAudio);
+  if (!files.length && lrc.length) {
+    const n = await attachLrcFiles(lrc, state.tracks);
+    toast(n ? `${plural(n, 'Songtext', 'Songtexte')} zugeordnet` : 'Keine passenden Titel für die .lrc-Dateien gefunden');
+    return;
+  }
   if (!files.length) {
     toast('Keine Audiodateien gefunden');
     return;
@@ -786,7 +698,9 @@ async function importFiles(fileList) {
       if (e && e.name === 'QuotaExceededError') { toast('Speicher voll – Import abgebrochen'); break; }
     }
   }
+  const lyricsAdded = lrc.length ? await attachLrcFiles(lrc, state.tracks) : 0;
   const parts = [`${plural(added, 'Titel', 'Titel')} importiert`];
+  if (lyricsAdded) parts.push(`${plural(lyricsAdded, 'Songtext', 'Songtexte')}`);
   if (skipped) parts.push(`${skipped} bereits vorhanden`);
   if (failed) parts.push(`${failed} nicht unterstützt`);
   toast(parts.join(' · '));
@@ -795,11 +709,6 @@ async function importFiles(fileList) {
 }
 
 // ---------- Player UI ----------
-function setRangeP(input) {
-  const min = +input.min || 0, max = +input.max || 100;
-  input.style.setProperty('--p', ((input.value - min) / (max - min)) * 100 + '%');
-}
-
 let seeking = false;
 
 function updatePlayerUI() {
@@ -893,6 +802,7 @@ function openNowPlaying() {
   if ($('#player-bar').hidden) return;
   $('#now-playing').hidden = false;
   startViz();
+  onNowPlayingOpen();
 }
 function closeNowPlaying() {
   $('#now-playing').hidden = true;
@@ -902,6 +812,7 @@ function closeNowPlaying() {
 let vizRunning = false;
 function startViz() {
   const canvas = $('#np-viz');
+  if (canvas.hidden) return;
   const ok = player.analyser && player.mode === 'library';
   canvas.style.visibility = ok ? 'visible' : 'hidden';
   if (!ok || vizRunning) return;
@@ -988,11 +899,7 @@ const ACTIONS = {
   },
   'speed-menu': () => speedSheet(),
   rate: (el) => { player.setRate(+el.dataset.rate); closeSheet(); },
-  'goto-eq': () => {
-    closeNowPlaying();
-    go('settings');
-    setTimeout(() => $('#eq')?.scrollIntoView({ behavior: 'smooth' }), 80);
-  },
+  'goto-studio': () => { closeNowPlaying(); go('studio'); },
   'close-sheet': () => closeSheet(),
   'track-menu': (el) => trackMenu(el.dataset.id, el.dataset.pl, +el.dataset.index),
   'm-next': () => { player.addNext([state.menu.id]); closeSheet(); toast('Wird als Nächstes gespielt'); },
@@ -1006,6 +913,13 @@ const ACTIONS = {
   },
   'm-artist': () => { const t = getTrack(state.menu.id); closeSheet(); closeNowPlaying(); go('artist', t.artist); },
   'm-edit': () => editSheet(getTrack(state.menu.id)),
+  'm-lyrics': () => editLyricsSheet(getTrack(state.menu.id)),
+  'm-sing': async () => {
+    const id = state.menu.id;
+    closeSheet();
+    if (player.currentId !== id || player.mode !== 'library') await player.playList([id], 0);
+    openSing();
+  },
   'm-remove-pl': async () => {
     const p = state.playlists.find((x) => x.id === state.menu.playlistId);
     if (!p) return;
@@ -1094,12 +1008,6 @@ const ACTIONS = {
   'radio-retry': () => searchRadio(),
   theme: (el) => { ui.theme = el.dataset.theme; saveUi(); applyTheme(); render(); },
   accent: (el) => { ui.accent = el.dataset.color; saveUi(); applyTheme(); render(); },
-  'eq-preset': (el) => {
-    const name = el.dataset.preset;
-    player.setEq(EQ_PRESETS[name], name);
-    if (!player.settings.eqOn) player.setEqOn(true);
-    rerenderKeepScroll();
-  },
   install: async () => {
     const p = state.installPrompt;
     if (!p) return;
@@ -1120,6 +1028,9 @@ const ACTIONS = {
   },
 };
 
+Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions);
+const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms };
+
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-action]');
   if (!el || el.disabled) return;
@@ -1134,6 +1045,7 @@ document.addEventListener('submit', async (e) => {
   if (!form) return;
   e.preventDefault();
   const kind = form.dataset.form;
+  if (FORMS[kind]) return FORMS[kind](form);
   if (kind === 'prompt') closeSheet(form.v.value.trim() || null);
   else if (kind === 'confirm') closeSheet(true);
   else if (kind === 'radio-search') {
@@ -1156,6 +1068,7 @@ document.addEventListener('submit', async (e) => {
 
 document.addEventListener('input', (e) => {
   const el = e.target;
+  if (onLyricsInput(el) || onStudioInput(el)) return;
   if (el.id === 'lib-search') {
     state.libQuery = el.value;
     rerenderKeepScroll();
@@ -1163,8 +1076,10 @@ document.addEventListener('input', (e) => {
     const gains = [...player.settings.eq];
     gains[+el.dataset.band] = +el.value;
     player.setEq(gains, 'Eigene');
+    reportPreset();
+    document.querySelectorAll('.sound.on').forEach((b) => b.classList.remove('on'));
     el.previousElementSibling.textContent = (el.value > 0 ? '+' : '') + el.value;
-    document.querySelectorAll('[data-action=eq-preset]').forEach((c) => c.classList.remove('on'));
+    document.querySelectorAll('#eq [data-action=sound]').forEach((c) => c.classList.remove('on'));
     setRangeP(el);
   } else if (el.id === 'pb-volume') {
     player.setVolume(+el.value);
@@ -1203,6 +1118,7 @@ document.addEventListener('change', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     if (!$('#sheet').hidden) closeSheet();
+    else if (isSingOpen()) closeSing();
     else closeNowPlaying();
     return;
   }
@@ -1251,8 +1167,8 @@ matchMedia('(prefers-color-scheme: light)').addEventListener?.('change', applyTh
 // ---------- Player events ----------
 player.lookup = getTrack;
 player.coverUrl = coverUrl;
-player.addEventListener('track', updatePlayerUI);
-player.addEventListener('state', updateState);
+player.addEventListener('track', () => { updatePlayerUI(); onTrackChange(); });
+player.addEventListener('state', () => { updateState(); updateSingState(); });
 player.addEventListener('time', updateTime);
 player.addEventListener('queue', () => { if (!$('#sheet').hidden && $('#sheet h3')?.textContent === 'Wird gespielt') queueSheet(); });
 player.addEventListener('sleep', (e) => { updateState(); if (e.detail === 'done') toast('Gute Nacht – Sleep-Timer beendet'); });
@@ -1261,10 +1177,23 @@ player.addEventListener('played', () => { if (state.route.view === 'home') reren
 setInterval(() => { if (player.sleepUntil) updateState(); }, 30000);
 
 // ---------- Boot ----------
+hooks.render = render;
+hooks.rerender = rerenderKeepScroll;
+hooks.trackRows = trackRows;
+hooks.registerList = registerList;
+hooks.createPlaylist = createPlaylist;
+hooks.reportPreset = reportPreset;
+
 async function boot() {
   applyTheme();
   renderNav();
   hydrateIcons(document);
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW', e));
+  }
+  await ensureAccess();
+  renderAccountChip();
+  reportPreset();
   const vol = $('#pb-volume');
   vol.value = player.settings.volume;
   setRangeP(vol);
@@ -1277,10 +1206,6 @@ async function boot() {
   render();
   await player.restore();
   updatePlayerUI();
-
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW', e));
-  }
 }
 
 boot();

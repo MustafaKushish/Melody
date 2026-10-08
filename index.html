@@ -21,6 +21,7 @@
       <div class="brand"><img src="icons/icon.svg" alt=""><span>Melody</span></div>
       <nav class="side-nav" id="side-nav"></nav>
       <div class="side-foot">
+        <div id="account-chip"></div>
         <button class="btn btn-primary block" data-action="import"><span data-icon="upload"></span>Musik importieren</button>
       </div>
     </aside>
@@ -63,6 +64,7 @@
     <div class="np-art">
       <div class="cover xl" id="np-cover"></div>
       <canvas id="np-viz" width="600" height="160"></canvas>
+      <div id="np-lyrics" class="lyrics-view" hidden></div>
     </div>
     <div class="np-info">
       <div class="meta">
@@ -83,19 +85,24 @@
       <button class="icon-btn" data-action="repeat" id="np-repeat" aria-label="Wiederholen" data-icon="repeat"></button>
     </div>
     <div class="np-extra">
+      <button class="chip" data-action="np-lyrics"><span data-icon="lyrics"></span>Lyrics</button>
+      <button class="chip accent" data-action="sing"><span data-icon="mic"></span>Mitsingen</button>
+      <button class="chip" data-action="goto-studio"><span data-icon="tune"></span>Sound</button>
       <button class="chip" data-action="speed-menu"><span data-icon="speed"></span><span id="np-speed">1×</span></button>
       <button class="chip" data-action="sleep-menu"><span data-icon="timer"></span><span id="np-sleep">Sleep</span></button>
-      <button class="chip" data-action="goto-eq"><span data-icon="eq"></span>EQ</button>
       <button class="chip" data-action="queue"><span data-icon="queue"></span>Als Nächstes</button>
     </div>
   </section>
+
+  <section id="sing" class="sing" hidden aria-label="Mitsingen"></section>
+  <section id="gate" class="gate" hidden></section>
 
   <div id="sheet-backdrop" class="sheet-backdrop" hidden data-action="close-sheet"></div>
   <div id="sheet" class="sheet" hidden role="dialog" aria-modal="true"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="drop-hint" class="drop-hint" hidden>Dateien loslassen, um sie zu importieren</div>
 
-  <input type="file" id="file-input" multiple accept="audio/*,.mp3,.m4a,.aac,.flac,.ogg,.opus,.wav,.webm" hidden>
+  <input type="file" id="file-input" multiple accept="audio/*,.mp3,.m4a,.aac,.flac,.ogg,.opus,.wav,.webm,.lrc" hidden>
   <input type="file" id="folder-input" webkitdirectory multiple hidden>
 
   <script type="module" src="js/app.js"></script>
