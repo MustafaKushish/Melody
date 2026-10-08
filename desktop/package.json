@@ -7,7 +7,7 @@
   "private": true,
   "main": "main.js",
   "scripts": {
-    "prepare-app": "bash ../tools/build-demo.sh desktop/app",
+    "prepare-app": "node prepare.js",
     "start": "npm run prepare-app && electron .",
     "dist:win": "npm run prepare-app && electron-builder --win --x64 --publish never"
   },
@@ -21,8 +21,7 @@
     "copyright": "Melody",
     "files": [
       "main.js",
-      "app/**/*",
-      "!app/sw.js"
+      "app/**/*"
     ],
     "directories": {
       "output": "dist",

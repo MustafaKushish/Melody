@@ -186,6 +186,7 @@ npm start             # zum Ausprobieren direkt starten
 - Diese erste Version läuft eigenständig wie die Demo: Konto und Abo werden auf dem PC simuliert, Melody Connect braucht den Server.
 - Das Setup ist noch nicht digital signiert. Windows SmartScreen zeigt deshalb beim ersten Start „Der Computer wurde durch Windows geschützt“: auf **Weitere Informationen → Trotzdem ausführen** klicken. Für den Verkauf ein Code-Signing-Zertifikat kaufen (ca. 200–400 €/Jahr) und in `desktop/package.json` eintragen.
 - Unter Linux braucht der Build zusätzlich Wine (`apt install wine64`); unter Windows reicht `npm run dist:win`.
+- **Automatisch über GitHub**: Ein Versions-Tag (z. B. `v3.0.1`) startet „Windows-Setup“ unter „Actions“; das fertige Setup erscheint unter **Releases** zum Herunterladen.
 
 ### Demo ohne Server
 `tools/build-demo.sh` baut eine Version, bei der Konten und Zahlungen im Browser simuliert werden. Sie eignet sich zum Vorführen und lässt sich auf jedem statischen Hosting (z. B. GitHub Pages) betreiben.
