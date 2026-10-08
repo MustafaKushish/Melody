@@ -84,7 +84,8 @@ class Player extends EventTarget {
     this.d = 0;
     this.radioEl = new Audio();
     this.radioEl.preload = 'none';
-    this.mode = 'library'; // 'library' | 'radio'
+    this.mode = 'library'; // 'library' | 'radio' | 'podcast'
+    this.episode = null; // { ep, pod } while a podcast episode plays
     this.queue = [];
     this.original = null; // order before shuffle
     this.index = -1;
@@ -127,9 +128,17 @@ class Player extends EventTarget {
     }
     this.radioEl.volume = this.settings.volume;
     for (const ev of ['play', 'pause', 'waiting', 'playing']) this.radioEl.addEventListener(ev, () => this.emit('state'));
+    this.radioEl.addEventListener('timeupdate', () => { if (this.mode === 'podcast') { this.emit('time'); this.emit('podprogress'); } });
+    this.radioEl.addEventListener('loadedmetadata', () => { if (this.mode === 'podcast') { this.radioEl.playbackRate = this.settings.podRate || 1; this.emit('time'); this.updatePosition(); } });
+    this.radioEl.addEventListener('ended', () => {
+      if (this.mode !== 'podcast') return;
+      if (this.sleepAtEnd) { this.sleepAtEnd = false; this.emit('sleep', 'done'); }
+      this.emit('episode-ended', this.episode);
+    });
     this.radioEl.addEventListener('error', () => {
       // Stream dropped while already playing (play() reports failures to start).
       if (this.mode === 'radio' && this.radioEl.getAttribute('src') && this.radioEl.currentTime > 0) this.emit('error', 'Verbindung zum Sender verloren.');
+      if (this.mode === 'podcast' && this.radioEl.getAttribute('src')) this.emit('error', 'Folge nicht erreichbar – lade sie für unterwegs herunter.');
       this.emit('state');
     });
     this.setupMediaSession();
@@ -143,7 +152,14 @@ class Player extends EventTarget {
     return this.decks[this.d];
   }
   get media() {
-    return this.mode === 'radio' ? this.radioEl : this.el;
+    return this.mode === 'library' ? this.el : this.radioEl;
+  }
+
+  // What's playing, independent of the source (used by drive, party and fitness screens).
+  nowInfo() {
+    if (this.mode === 'radio') return { title: this.station?.name, artist: 'Live-Radio', image: this.station?.favicon || '' };
+    if (this.mode === 'podcast') return { title: this.episode?.ep.title, artist: this.episode?.pod.title, image: this.episode?.ep.image || this.episode?.pod.image || '' };
+    return { title: this.track?.title, artist: this.track?.artist, track: this.track };
   }
   get playing() {
     return !this.media.paused;
@@ -630,6 +646,7 @@ class Player extends EventTarget {
       if (e.name === 'AbortError') return;
       if (e.name === 'NotAllowedError') this.emit('error', 'Tippe auf Play, um die Wiedergabe zu starten.');
       else if (this.mode === 'radio') this.emit('error', 'Sender nicht erreichbar.');
+      else if (this.mode === 'podcast') this.emit('error', 'Folge nicht erreichbar – lade sie für unterwegs herunter.');
       else this.emit('error', 'Diese Datei kann auf diesem Gerät nicht abgespielt werden.');
     }
   }
@@ -645,6 +662,7 @@ class Player extends EventTarget {
 
   next(auto = false) {
     if (this.mode === 'radio') return;
+    if (this.mode === 'podcast') return this.seek(this.radioEl.currentTime + 30);
     if (this.index + 1 < this.queue.length) return this.load(this.index + 1);
     if (this.repeat === 'all' && this.queue.length) return this.load(0);
     if (auto) {
@@ -656,6 +674,7 @@ class Player extends EventTarget {
 
   prev() {
     if (this.mode === 'radio') return;
+    if (this.mode === 'podcast') return this.seek(this.radioEl.currentTime - 15);
     if (this.el.currentTime > 3 || this.index <= 0) {
       this.el.currentTime = 0;
       return;
@@ -777,9 +796,21 @@ class Player extends EventTarget {
   }
 
   seek(sec) {
-    if (this.mode !== 'library' || !isFinite(sec)) return;
-    this.el.currentTime = Math.max(0, Math.min(sec, this.el.duration || 0));
+    if (this.mode === 'radio' || !isFinite(sec)) return;
+    const m = this.media;
+    m.currentTime = Math.max(0, Math.min(sec, m.duration || sec));
     this.updatePosition();
+    if (this.mode === 'podcast') this.emit('podprogress');
+  }
+
+  // Podcasts have their own speed (often 1.25–2×), music keeps its own.
+  setPodRate(r) {
+    this.settings.podRate = r;
+    this.radioEl.preservesPitch = this.radioEl.webkitPreservesPitch = true;
+    if (this.mode === 'podcast') this.radioEl.playbackRate = r;
+    this.saveSettings();
+    this.updatePosition();
+    this.emit('state');
   }
 
   // Lowers the music while the navigation voice speaks (or voice control listens).
@@ -847,11 +878,33 @@ class Player extends EventTarget {
     }, 250);
   }
 
+  // ---------- Podcast episodes (played on the stream element, outside the music effects) ----------
+  playEpisode(ep, pod, src, startAt = 0) {
+    this.loadToken++;
+    this.cancelFade();
+    this.el.pause();
+    if (this.mode === 'radio') this.radioEl.pause();
+    this.mode = 'podcast';
+    this.station = null;
+    this.episode = { ep, pod };
+    const el = this.radioEl;
+    el.preload = 'auto';
+    el.src = src;
+    el.preservesPitch = el.webkitPreservesPitch = true;
+    el.defaultPlaybackRate = el.playbackRate = this.settings.podRate || 1;
+    if (startAt > 5) el.addEventListener('loadedmetadata', () => { el.currentTime = startAt; }, { once: true });
+    this.updateMetadata();
+    this.emit('track', null);
+    return this.play();
+  }
+
   // ---------- Radio ----------
   playRadio(station) {
     this.loadToken++;
     this.cancelFade();
     this.el.pause();
+    this.episode = null;
+    this.radioEl.preload = 'none';
     this.mode = 'radio';
     this.station = station;
     this.radioEl.src = station.url;
@@ -861,7 +914,9 @@ class Player extends EventTarget {
   }
 
   stopRadio() {
-    if (this.mode !== 'radio') return;
+    if (this.mode === 'library') return;
+    if (this.mode === 'podcast') this.emit('podprogress');
+    this.episode = null;
     this.radioEl.pause();
     this.radioEl.removeAttribute('src');
     this.radioEl.load();
@@ -879,8 +934,8 @@ class Player extends EventTarget {
       previoustrack: () => this.prev(),
       nexttrack: () => this.next(),
       seekto: (d) => this.seek(d.seekTime),
-      seekbackward: (d) => this.seek(this.el.currentTime - (d.seekOffset || 10)),
-      seekforward: (d) => this.seek(this.el.currentTime + (d.seekOffset || 10)),
+      seekbackward: (d) => this.seek(this.media.currentTime - (d.seekOffset || (this.mode === 'podcast' ? 15 : 10))),
+      seekforward: (d) => this.seek(this.media.currentTime + (d.seekOffset || (this.mode === 'podcast' ? 30 : 10))),
     };
     for (const [k, fn] of Object.entries(handlers)) {
       try { ms.setActionHandler(k, fn); } catch { /* unsupported action */ }
@@ -890,6 +945,14 @@ class Player extends EventTarget {
   updateMetadata() {
     if (!('mediaSession' in navigator) || typeof MediaMetadata === 'undefined') return;
     const fallback = [{ src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' }];
+    if (this.mode === 'podcast' && this.episode) {
+      const img = this.episode.ep.image || this.episode.pod.image;
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: this.episode.ep.title, artist: this.episode.pod.title, album: 'Podcast',
+        artwork: img ? [{ src: img, sizes: '512x512' }] : fallback,
+      });
+      return;
+    }
     if (this.mode === 'radio' && this.station) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: this.station.name, artist: 'Melody Radio', album: this.station.tags || '', artwork: fallback,
@@ -907,11 +970,12 @@ class Player extends EventTarget {
 
   updatePosition() {
     if (!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState) return;
-    const d = this.el.duration;
+    const m = this.media;
+    const d = m.duration;
     if (!isFinite(d) || d <= 0) return;
     try {
       navigator.mediaSession.setPositionState({
-        duration: d, playbackRate: this.el.playbackRate || 1, position: Math.min(this.el.currentTime, d),
+        duration: d, playbackRate: m.playbackRate || 1, position: Math.min(m.currentTime, d),
       });
     } catch { /* ignore */ }
   }

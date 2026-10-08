@@ -12,6 +12,7 @@ import { partyActions, closeParty, isPartyOpen } from './party.js';
 import { fitnessActions, closeFitness, isFitnessOpen, onFitnessInput, openFitness } from './fitness.js';
 import { viewRecognize, recognizeActions, onRecognizeChange, listen as recognizeListen } from './recognize.js';
 import { openDrive } from './drive.js';
+import { viewPodcasts, viewPodcast, podcastActions, podcastForms, homeSection as podHome, refreshSubscriptions, fmtTime as podTime } from './podcasts.js';
 import { DEMO } from './api.js';
 import { viewStudio, afterStudioRender, studioActions, onStudioInput, reportPreset } from './studio.js';
 import {
@@ -87,7 +88,8 @@ const MIXES = [
 const NAV = [
   { id: 'home', label: 'Start', icon: 'home', mobile: true },
   { id: 'discover', label: 'Entdecken', icon: 'explore', mobile: true },
-  { id: 'foryou', label: 'Für dich', icon: 'sparkle', mobile: true },
+  { id: 'podcasts', label: 'Podcasts', icon: 'podcast', mobile: true },
+  { id: 'foryou', label: 'Für dich', icon: 'sparkle' },
   { id: 'library', label: 'Bibliothek', icon: 'library', mobile: true },
   { id: 'playlists', label: 'Playlists', icon: 'playlist' },
   { id: 'radio', label: 'Radio', icon: 'radio' },
@@ -132,6 +134,8 @@ const VIEWS = {
   more: viewMore,
   discover: viewDiscover,
   recognize: viewRecognize,
+  podcasts: viewPodcasts,
+  podcast: viewPodcast,
   shared: viewShared,
 };
 
@@ -145,7 +149,7 @@ function render() {
   hydrateIcons(main);
   const fab = $('#rc-fab');
   if (fab) fab.hidden = view === 'recognize';
-  const navView = { album: 'library', artist: 'library', playlist: 'playlists', premium: 'account', shared: 'playlists' }[view] || view;
+  const navView = { album: 'library', artist: 'library', playlist: 'playlists', premium: 'account', shared: 'playlists', podcast: 'podcasts' }[view] || view;
   document.querySelectorAll('.nav-item').forEach((el) => el.classList.toggle('active', el.dataset.view === navView));
   afterRender(view);
 }
@@ -259,6 +263,7 @@ function viewHome() {
       </div>
       ${DEMO ? '<p class="demo-note" style="margin-top:16px">Demo-Version: Tippe auf „Songs entdecken“ und spiele die Melody-Songs ab – mit Lyrics zum Mitsingen. Du kannst auch eigene Musikdateien importieren.</p>' : ''}
       <div id="home-catalog"></div>
+      ${podHome()}
       ${MODES_HTML()}
       <div class="features">
         <div class="feature">${icon('heartOutline')}<b>100 % werbefrei</b><span>Keine Werbung, kein Tracking, keine Datenweitergabe.</span></div>
@@ -294,6 +299,7 @@ function viewHome() {
       <div class="tabs">${Object.entries(MOODS).slice(0, 6).map(([name, m]) => `<button class="chip" data-action="ai-mood" data-mood="${name}">${m.emoji} ${name}</button>`).join('')}</div>
     </section>
     <div id="home-catalog"></div>
+    ${podHome()}
     <h2>Smart-Mixe</h2>
     <div class="grid">${MIXES.map((m) => {
       const n = m.ids().length;
@@ -633,13 +639,16 @@ function sleepSheet() {
   const active = player.sleepUntil ? `Endet in ${Math.ceil((player.sleepUntil - Date.now()) / 60000)} Min.` : player.sleepAtEnd ? 'Endet nach diesem Titel' : '';
   openSheet(`<h3>Sleep-Timer</h3>${active ? `<p class="muted" style="padding:0 8px">${active}</p>` : ''}
     ${[5, 15, 30, 45, 60, 90].map((m) => `<button class="sheet-item" data-action="sleep" data-min="${m}">${icon('timer')}${m} Minuten</button>`).join('')}
-    <button class="sheet-item" data-action="sleep" data-min="end">${icon('note')}Ende des Titels</button>
+    <button class="sheet-item" data-action="sleep" data-min="end">${icon('note')}${player.mode === 'podcast' ? 'Ende der Folge' : 'Ende des Titels'}</button>
     ${active ? `<button class="sheet-item danger" data-action="sleep" data-min="0">${icon('close')}Timer ausschalten</button>` : ''}`);
 }
 
 function speedSheet() {
-  openSheet(`<h3>Wiedergabegeschwindigkeit</h3>
-    ${[0.5, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2].map((r) => `<button class="sheet-item${player.settings.rate === r ? ' on' : ''}" data-action="rate" data-rate="${r}">${icon('speed')}${String(r).replace('.', ',')}×${r === 1 ? ' (Normal)' : ''}</button>`).join('')}`);
+  const pod = player.mode === 'podcast';
+  const cur = pod ? player.settings.podRate || 1 : player.settings.rate;
+  const rates = pod ? [0.8, 1, 1.2, 1.4, 1.6, 1.8, 2, 2.5] : [0.5, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
+  openSheet(`<h3>${pod ? 'Podcast-Geschwindigkeit' : 'Wiedergabegeschwindigkeit'}</h3>
+    ${rates.map((r) => `<button class="sheet-item${cur === r ? ' on' : ''}" data-action="rate" data-rate="${r}">${icon('speed')}${String(r).replace('.', ',')}×${r === 1 ? ' (Normal)' : ''}</button>`).join('')}`);
 }
 
 function editSheet(t) {
@@ -763,6 +772,7 @@ async function importFiles(fileList) {
 let seeking = false;
 
 function updatePlayerUI() {
+  if (player.mode === 'podcast') return updatePodcastUI();
   const radio = player.mode === 'radio';
   const t = radio ? null : player.track;
   const bar = $('#player-bar');
@@ -800,6 +810,33 @@ function updatePlayerUI() {
   markCurrent();
 }
 
+function setCovers(html) {
+  for (const [sel, size] of [['#pb-cover', 'sm'], ['#np-cover', 'xl']]) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    const c = tmp.firstElementChild;
+    c.classList.add(size);
+    c.id = sel.slice(1);
+    $(sel).replaceWith(c);
+  }
+}
+
+function updatePodcastUI() {
+  const { ep, pod } = player.episode;
+  $('#player-bar').hidden = false;
+  $('#pb-title').textContent = $('#np-title').textContent = ep.title;
+  $('#pb-artist').textContent = $('#np-artist').textContent = pod.title;
+  const img = ep.image || pod.image;
+  setCovers(`<div class="cover" style="--h:${hue(pod.title)}">${img ? `<img src="${esc(img)}" alt="" referrerpolicy="no-referrer">` : icon('mic')}</div>`);
+  $('#np-bg').style.setProperty('--h', hue(pod.title));
+  $('#np-context').textContent = 'Podcast';
+  $('#np-fav').hidden = true;
+  document.querySelectorAll('[data-action=shuffle], [data-action=repeat]').forEach((el) => { el.disabled = true; el.style.opacity = '.35'; });
+  document.querySelectorAll('[data-action=prev], [data-action=next], #np-seek, .np-extra [data-action=speed-menu]').forEach((el) => { el.disabled = false; el.style.opacity = ''; });
+  updateState();
+  updateTime();
+}
+
 function updateState() {
   const playing = player.playing;
   for (const id of ['#pb-play', '#np-play']) {
@@ -813,7 +850,7 @@ function updateState() {
     b.classList.toggle('on', player.repeat !== 'off');
     setIcon(b, player.repeat === 'one' ? 'repeatOne' : 'repeat');
   }
-  $('#np-speed').textContent = String(player.settings.rate).replace('.', ',') + '×';
+  $('#np-speed').textContent = String(player.mode === 'podcast' ? player.settings.podRate || 1 : player.settings.rate).replace('.', ',') + '×';
   $('#np-sleep').textContent = player.sleepUntil ? `${Math.ceil((player.sleepUntil - Date.now()) / 60000)} Min.` : player.sleepAtEnd ? 'Titelende' : 'Sleep';
   if (playing) startViz();
 }
@@ -829,8 +866,8 @@ function updateTime() {
     setRangeP(s);
     return;
   }
-  const el = player.el;
-  const d = el.duration || player.track?.duration || 0;
+  const el = player.media;
+  const d = el.duration || (player.mode === 'podcast' ? player.episode?.ep.duration : player.track?.duration) || 0;
   const c = el.currentTime || 0;
   const pct = d ? (c / d) * 100 : 0;
   $('#pb-fill').style.width = pct + '%';
@@ -845,7 +882,7 @@ function updateTime() {
 }
 
 function markCurrent() {
-  const id = player.mode === 'radio' ? player.station?.id : player.currentId;
+  const id = player.mode === 'radio' ? player.station?.id : player.mode === 'podcast' ? null : player.currentId;
   document.querySelectorAll('.track[data-id]').forEach((el) => el.classList.toggle('current', el.dataset.id === id));
 }
 
@@ -954,7 +991,7 @@ const ACTIONS = {
     toast(v === '0' ? 'Sleep-Timer aus' : v === 'end' ? 'Stoppt nach diesem Titel' : `Musik stoppt in ${v} Minuten`);
   },
   'speed-menu': () => speedSheet(),
-  rate: (el) => { player.setRate(+el.dataset.rate); closeSheet(); },
+  rate: (el) => { player.mode === 'podcast' ? player.setPodRate(+el.dataset.rate) : player.setRate(+el.dataset.rate); closeSheet(); },
   'goto-studio': () => { closeNowPlaying(); go('studio'); },
   'close-sheet': () => closeSheet(),
   'track-menu': (el) => trackMenu(el.dataset.id, el.dataset.pl, +el.dataset.index),
@@ -1093,8 +1130,8 @@ const ACTIONS = {
   },
 };
 
-Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions, driveActions, partyActions, fitnessActions, recognizeActions);
-const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms, ...driveForms };
+Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions, driveActions, partyActions, fitnessActions, recognizeActions, podcastActions);
+const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms, ...driveForms, ...podcastForms };
 
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-action]');
@@ -1151,7 +1188,7 @@ document.addEventListener('input', (e) => {
     setRangeP(el);
   } else if (el.id === 'np-seek') {
     seeking = true;
-    const d = player.el.duration || 0;
+    const d = player.media.duration || 0;
     $('#np-cur').textContent = fmt((el.value / 1000) * d);
     setRangeP(el);
   }
@@ -1161,7 +1198,7 @@ document.addEventListener('change', (e) => {
   const el = e.target;
   if (onRecognizeChange(el)) return;
   if (el.id === 'np-seek') {
-    player.seek((el.value / 1000) * (player.el.duration || 0));
+    player.seek((el.value / 1000) * (player.media.duration || 0));
     seeking = false;
   } else if (el.id === 'lib-sort') {
     state.libSort = el.value;
@@ -1194,8 +1231,8 @@ document.addEventListener('keydown', (e) => {
   if (e.target.closest('input, select, textarea') || e.metaKey || e.ctrlKey || e.altKey) return;
   const radio = player.mode === 'radio';
   if (e.key === ' ') { e.preventDefault(); player.toggle(); }
-  else if (e.key === 'ArrowRight') { e.preventDefault(); e.shiftKey ? player.next() : !radio && player.seek(player.el.currentTime + 10); }
-  else if (e.key === 'ArrowLeft') { e.preventDefault(); e.shiftKey ? player.prev() : !radio && player.seek(player.el.currentTime - 10); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); e.shiftKey ? player.next() : !radio && player.seek(player.media.currentTime + (player.mode === 'podcast' ? 30 : 10)); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); e.shiftKey ? player.prev() : !radio && player.seek(player.media.currentTime - (player.mode === 'podcast' ? 15 : 10)); }
   else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
     e.preventDefault();
     const v = Math.min(1, Math.max(0, player.settings.volume + (e.key === 'ArrowUp' ? 0.05 : -0.05)));
@@ -1284,6 +1321,7 @@ async function boot() {
   render();
   await player.restore();
   updatePlayerUI();
+  refreshSubscriptions().catch(() => {});
 }
 
 boot();

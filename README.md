@@ -50,6 +50,17 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 - Alternativ lässt sich eine Aufnahme-Datei auswählen. Die Aufnahmen werden nicht gespeichert.
 - Neue Katalog-Songs brauchen einen Fingerabdruck: `node tools/build-fingerprints.mjs`.
 
+### 🎙 Podcasts & Hörbücher
+- **Alle Podcasts der Welt**: Suche über das Apple-Podcast-Verzeichnis, Themen-Schnellwahl (Nachrichten, Wissen, Comedy, True Crime, Kinder, Hörbuch …), oder jede RSS-Adresse.
+- **Abonnieren**: „Neue Folgen“ aus allen Abos auf einen Blick. Die Abos werden beim Start aktualisiert.
+- **Weiterhören, wo du warst**: Die Position wird laufend gespeichert, auch beim Pausieren und Schließen. „Podcasts weiterhören“ steht auf der Startseite.
+- **Herunterladen & offline hören**, einzeln oder die neuesten 10 Folgen.
+- **Eigene Podcast-Geschwindigkeit** (0,8× bis 2,5×, Stimme klingt normal), getrennt von der Musik. Spulen −15 s / +30 s, auch über Kopfhörer und Sperrbildschirm.
+- Sleep-Timer „Ende der Folge“, „Als gehört markieren“, **Video-Podcasts** im Videoplayer.
+- **Hörbücher**: Viele Hörbücher erscheinen als Podcast-Feed, z. B. gemeinfreie Klassiker von LibriVox. Sie laufen mit denselben Funktionen.
+- Sicherheit: Shownotes werden als reiner Text angezeigt (kein eingeschleuster Code). Der Server lädt Feeds nur von öffentlichen Adressen (SSRF-Schutz).
+- Demo-Podcast **„Melody Insider“** mit 3 Folgen (zwei Moderatoren, synthetische Stimmen) unter `podcasts/`.
+
 ### 🎉 Party & 🌙 Entspannen
 - **Party-Modus**: Vollbild-Lichtshow im Takt der Musik, Übergänge von 6 s zwischen den Songs, Klang „Melody Party“, DJ-Pads. Beim Beenden kommt der eigene Sound zurück. Die Lichtshow pulsiert sanft, ohne Stroboskop, und bleibt bei „Bewegung reduzieren“ ruhig.
 - **Entspannen**: weicher Klang, ruhiger Mix, die Musik endet nach 30 Minuten.
@@ -123,7 +134,7 @@ Danach `http://localhost:8080` öffnen.
 
 Ohne Stripe-Schlüssel läuft ein **Testmodus**: Abos und Gutscheine lassen sich ausprobieren, es wird nichts abgebucht. Ohne Anthropic-Schlüssel nutzt „Für dich“ die eingebaute Empfehlungs-Engine.
 
-Tests: `npm test` (27 Tests für Konten, Abos, Gutscheine, Stripe-Webhooks, KI-Anfrage, Sicherheit, Song-Erkennung und Tempo-Messung).
+Tests: `npm test` (33 Tests für Konten, Abos, Gutscheine, Stripe-Webhooks, KI-Anfrage, Sicherheit, Song-Erkennung und Tempo-Messung).
 
 ### Demo ohne Server
 `tools/build-demo.sh` baut eine Version, bei der Konten und Zahlungen im Browser simuliert werden. Sie eignet sich zum Vorführen und lässt sich auf jedem statischen Hosting (z. B. GitHub Pages) betreiben.
@@ -166,6 +177,13 @@ Einen API-Schlüssel unter [console.anthropic.com](https://console.anthropic.com
 | Autos mit eingebautem Android (Android Automotive: Volvo, Polestar, Renault …) | ❌ | ✅ als Media-App über Google Play |
 
 Für Karten-Kacheln, Ortssuche und Routen nutzt Melody die freien OpenStreetMap-Dienste. Diese sind für Tests gedacht. Bei vielen Nutzern braucht es einen Anbieter (z. B. MapTiler, Stadia Maps, eigener OSRM-Server). Die Adressen lassen sich in `js/drive.js` (`DEFAULT_GEO`) austauschen.
+
+## 🎬 Und Videos wie YouTube?
+Ein zweites YouTube aufzubauen ist für ein kleines Team nicht sinnvoll: Speicher, Übertragung und Umwandlung von Videos kosten ein Vielfaches von Audio. Dazu kommen Moderation, Urheberrechtsprüfung (wie Content-ID) und die Pflichten aus dem Digital Services Act. Was für Melody dagegen passt:
+1. **Video-Podcasts**: schon eingebaut.
+2. **Kurze Song-Loops** (3–8 s, wie „Spotify Canvas“) und **Musikvideos für den eigenen Katalog**: wenig Speicher, große Wirkung.
+3. **Live-Sessions & Konzerte** von Melody-Künstlern als Premium-Extra (Streaming über einen Anbieter wie Mux oder Cloudflare Stream).
+4. **Mitsing-Videos**: Karaoke mit Hintergrundvideo.
 
 ## 🏢 Idee: Melody für Fitnessstudios
 Studios brauchen für Musik über Lautsprecher eine **GEMA-Lizenz für öffentliche Wiedergabe**, und die kostet oft mehrere hundert Euro im Jahr. Ein **GEMA-freier Melody-Katalog** (eigene Künstler, Musik ohne Verwertungsgesellschaft) wäre ein starkes Geschäftsmodell:

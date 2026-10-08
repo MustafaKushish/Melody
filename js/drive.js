@@ -406,10 +406,11 @@ function renderLock() {
 
 function renderPlayer() {
   if (!D.open) return;
-  const radio = player.mode === 'radio';
+  const radio = player.mode !== 'library';
+  const info = player.nowInfo();
   const t = radio ? null : player.track;
-  const title = radio ? player.station?.name : t?.title;
-  const artist = radio ? 'Live-Radio' : t?.artist;
+  const title = info.title;
+  const artist = info.artist;
   $('#dv-title').textContent = title || 'Nichts ausgewählt';
   $('#dv-artist').textContent = artist || 'Tippe auf einen Mix';
   const c = $('#dv-cover');

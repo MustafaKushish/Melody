@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+  <channel>
+    <title>Melody Insider</title>
+    <link>https://github.com/MustafaKushish/Melody</link>
+    <language>de</language>
+    <itunes:author>Lea &amp; Max von Melody</itunes:author>
+    <description>Der Podcast hinter der Musik-App Melody: Ideen, Musik, Fitness und sicheres Fahren. Gesprochen mit synthetischen Stimmen.</description>
+    <itunes:image href="cover.jpg"/>
+    <itunes:category text="Music"/>
+    <item>
+      <title>Sicher unterwegs: Musik im Auto</title>
+      <guid isPermaLink="false">melody-insider-3</guid>
+      <pubDate>Mon, 05 Oct 2026 07:00:00 GMT</pubDate>
+      <description>Hallo zur dritten Folge des Melody Insider! Heute sprechen wir über Musik im Auto. Das Wichtigste zuerst: Beim Fahren gehören die Augen auf die Straße. Darum hat Melody einen Fahrermodus mit riesigen Knöpfen und einer Karte mit Navigation.</description>
+      <itunes:episode>3</itunes:episode>
+      <itunes:duration>57</itunes:duration>
+      <enclosure url="folge-3.mp3" length="456524" type="audio/mpeg"/>
+    </item>
+    <item>
+      <title>Fit mit Musik: das richtige Tempo</title>
+      <guid isPermaLink="false">melody-insider-2</guid>
+      <pubDate>Mon, 28 Sep 2026 07:00:00 GMT</pubDate>
+      <description>Willkommen zurück beim Melody Insider! Heute geht es um Musik beim Training. Wusstest du, dass das Tempo der Musik beim Sport einen großen Unterschied macht? Ja! Beim Laufen fühlt es sich leichter an, wenn die Schritte zum Beat passen.</description>
+      <itunes:episode>2</itunes:episode>
+      <itunes:duration>64</itunes:duration>
+      <enclosure url="folge-2.mp3" length="508562" type="audio/mpeg"/>
+    </item>
+    <item>
+      <title>Wie Melody entstanden ist</title>
+      <guid isPermaLink="false">melody-insider-1</guid>
+      <pubDate>Mon, 14 Sep 2026 07:00:00 GMT</pubDate>
+      <description>Hallo und herzlich willkommen beim Melody Insider! Ich bin Lea. Und ich bin Max. Heute erzählen wir, wie Melody entstanden ist. Die Idee war einfach: eine Musik-App ohne Werbung, die nicht teuer ist und auf allen Geräten läuft.</description>
+      <itunes:episode>1</itunes:episode>
+      <itunes:duration>67</itunes:duration>
+      <enclosure url="folge-1.mp3" length="539274" type="audio/mpeg"/>
+    </item>
+  </channel>
+</rss>

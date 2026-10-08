@@ -11,6 +11,7 @@ import { pricing, checkout, portal, demoCancel, redeemVoucher, myVouchers, vouch
 import { recommend, aiEnabled, MELODY_PRESETS } from './ai.js';
 import { findLyrics } from './lyrics.js';
 import { recognize, recognitionEnabled, addWish, topWishes } from './recognize.js';
+import { searchPodcasts, proxyFeed, proxyMedia } from './podcasts.js';
 import { PORT, PUBLIC_URL, DEMO_PAYMENTS, TRUST_PROXY, STUDENT_AUTO_APPROVE, ADMIN_TOKEN } from './config.js';
 import crypto from 'node:crypto';
 
@@ -19,6 +20,7 @@ const SECURE = PUBLIC_URL.startsWith('https://');
 
 // ---------- Routing ----------
 const routes = [];
+const STREAMED = Symbol('streamed'); // handler already wrote the response
 const route = (method, p, handler, opts = {}) => routes.push({ method, p, handler, ...opts });
 
 const authed = (req) => {
@@ -116,6 +118,23 @@ route('POST', '/api/recognize', ({ req, rawBody }) => {
 route('POST', '/api/wishes', ({ req, body }) => { addWish(authed(req).id, body); return { ok: true }; });
 route('GET', '/api/admin/wishes', ({ req }) => { admin(req); return { wishes: topWishes() }; });
 
+route('GET', '/api/podcasts/search', ({ req, query }) => {
+  const u = withAccess(req);
+  rateLimit(`podsearch:${u.id}`, 60, 3600000);
+  return searchPodcasts(query.get('q'));
+});
+route('GET', '/api/podcasts/feed', ({ req, query }) => {
+  const u = withAccess(req);
+  rateLimit(`podfeed:${u.id}`, 300, 3600000);
+  return proxyFeed(query.get('url'));
+});
+route('GET', '/api/podcasts/media', async ({ req, res, query }) => {
+  const u = withAccess(req);
+  rateLimit(`podmedia:${u.id}`, 200, 3600000);
+  await proxyMedia(query.get('url'), res, req.headers.range);
+  return STREAMED;
+});
+
 route('GET', '/api/lyrics', ({ req, query }) => {
   const u = withAccess(req);
   rateLimit(`lyrics:${u.id}`, 120, 3600000);
@@ -141,9 +160,9 @@ const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.json': 'application/json',
   '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8',
-  '.mp3': 'audio/mpeg', '.jpg': 'image/jpeg', '.lrc': 'text/plain; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
+  '.mp3': 'audio/mpeg', '.jpg': 'image/jpeg', '.lrc': 'text/plain; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.xml': 'application/xml; charset=utf-8',
 };
-const PUBLIC_DIRS = new Set(['', 'css', 'js', 'icons', 'legal', 'catalog', 'vendor']);
+const PUBLIC_DIRS = new Set(['', 'css', 'js', 'icons', 'legal', 'catalog', 'vendor', 'podcasts']);
 
 function serveStatic(req, res, pathname) {
   let rel = decodeURIComponent(pathname).replace(/^\/+/, '') || 'index.html';
@@ -225,9 +244,11 @@ export const server = http.createServer(async (req, res) => {
     // Only trust X-Forwarded-For behind a known reverse proxy, otherwise clients could dodge rate limits.
     const ip = (TRUST_PROXY && req.headers['x-forwarded-for']?.split(',')[0].trim()) || req.socket.remoteAddress;
     const out = await r.handler({ req, res, body, rawBody, query: url.searchParams, ip });
+    if (out === STREAMED) return;
     res.setHeader('Cache-Control', 'no-store');
     send(res, 200, JSON.stringify(out ?? {}), 'application/json; charset=utf-8');
   } catch (e) {
+    if (res.headersSent) { res.destroy(); return; }
     const status = e instanceof HttpError ? e.status : 500;
     if (status === 500) console.error(e);
     send(res, status, JSON.stringify({ error: status === 500 ? 'Interner Fehler.' : e.message }), 'application/json; charset=utf-8');
