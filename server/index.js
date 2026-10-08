@@ -12,6 +12,7 @@ import { recommend, aiEnabled, MELODY_PRESETS } from './ai.js';
 import { findLyrics } from './lyrics.js';
 import { recognize, recognitionEnabled, addWish, topWishes } from './recognize.js';
 import { searchPodcasts, proxyFeed, proxyMedia } from './podcasts.js';
+import { openStream, updateState, command, dropSession, dropUser } from './connect.js';
 import { PORT, PUBLIC_URL, DEMO_PAYMENTS, TRUST_PROXY, STUDENT_AUTO_APPROVE, ADMIN_TOKEN } from './config.js';
 import crypto from 'node:crypto';
 
@@ -55,7 +56,7 @@ route('POST', '/api/auth/login', ({ body, res, ip }) => {
 
 route('POST', '/api/auth/logout', ({ req, res }) => {
   const u = userFromRequest(req);
-  if (u) destroySession(u._token);
+  if (u) { destroySession(u._token); dropSession(u.id, u._token); }
   res.setHeader('Set-Cookie', sessionCookie('', SECURE));
   return { ok: true };
 });
@@ -67,6 +68,7 @@ route('POST', '/api/account/delete', ({ req, body, res }) => {
     throw new HttpError(409, 'Bitte kündige zuerst dein Abo unter „Abo verwalten“.');
   }
   deleteAccount(u.id);
+  dropUser(u.id);
   res.setHeader('Set-Cookie', sessionCookie('', SECURE));
   return { ok: true };
 });
@@ -133,6 +135,18 @@ route('GET', '/api/podcasts/media', async ({ req, res, query }) => {
   rateLimit(`podmedia:${u.id}`, 200, 3600000);
   await proxyMedia(query.get('url'), res, req.headers.range);
   return STREAMED;
+});
+
+// Melody Connect
+route('GET', '/api/connect/stream', ({ req, res, query }) => {
+  openStream(withAccess(req), query, req, res);
+  return STREAMED;
+});
+route('POST', '/api/connect/state', ({ req, body }) => updateState(withAccess(req), body));
+route('POST', '/api/connect/command', ({ req, body }) => {
+  const u = withAccess(req);
+  rateLimit(`connect:${u.id}`, 600, 600000);
+  return command(u, body);
 });
 
 route('GET', '/api/lyrics', ({ req, query }) => {

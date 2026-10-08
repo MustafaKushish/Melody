@@ -26,6 +26,7 @@ function offlineAccount() {
 
 function setAccount(account) {
   state.account = account;
+  hooks.accountChanged?.(account);
   if (account) cacheAccount(account);
   else localStorage.removeItem(CACHE_KEY);
   renderAccountChip();

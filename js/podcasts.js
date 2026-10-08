@@ -111,7 +111,8 @@ export async function refreshSubscriptions() {
 // ---------- Playback & progress ----------
 const findEp = (feed, guid) => P.pods[feed]?.episodes.find((e) => e.guid === guid);
 
-export async function playEp(feed, guid) {
+export async function playEp(feed, guid, at = null) {
+  if (!P.pods[feed]?.episodes.length) await loadPod(feed).catch(() => null);
   const pod = P.pods[feed];
   const ep = findEp(feed, guid);
   if (!pod || !ep) return;
@@ -121,7 +122,7 @@ export async function playEp(feed, guid) {
   if (P.url) URL.revokeObjectURL(P.url);
   P.url = blob ? URL.createObjectURL(blob) : null;
   const prog = P.progress[guid];
-  const startAt = prog && !prog.done && prog.pos < (prog.dur || Infinity) - 10 ? prog.pos : 0;
+  const startAt = at != null ? at : prog && !prog.done && prog.pos < (prog.dur || Infinity) - 10 ? prog.pos : 0;
   await player.playEpisode({ ...ep, feed }, { title: pod.title, image: pod.image, feed }, P.url || ep.url, startAt);
   if (startAt > 5) toast(`Weiter bei ${fmtTime(startAt)}`);
 }
@@ -399,7 +400,7 @@ export const podcastActions = {
   },
 };
 
-async function searchPods(q) {
+export async function searchPods(q) {
   q = q.trim();
   if (!q) return;
   Object.assign(P.search, { q, loading: true, results: null, error: '' });
@@ -421,6 +422,9 @@ export const podcastForms = {
 player.addEventListener('state', () => {
   if (player.mode === 'podcast' && player.episode) updateEpRow(player.episode.ep.guid);
 });
+
+// For the global search.
+export const podIndex = () => Object.values(P.pods);
 
 // Test hook
 window.__melodyPods = P;

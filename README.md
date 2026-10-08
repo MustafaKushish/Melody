@@ -6,6 +6,8 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 
 ## ✨ Funktionen
 
+> **Neu in Melody 3.0:** Suche über alles (auch Liedtexte), Melody-Rückblick, Melody Connect (Geräte fernsteuern und Musik mitnehmen), Kinder-Modus mit Eltern-PIN sowie Barrierefreiheit und Ziehen zum Sortieren.
+
 ### 🎤 Mitsingen
 - **Lyrics laufen synchron mit**, die aktuelle Zeile leuchtet. Ein Tipp auf eine Zeile springt an diese Stelle.
 - **Karaoke-Vollbild**: große Zeilen, die sich im Takt füllen, und ein Countdown vor dem Einsatz.
@@ -60,6 +62,38 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 - **Hörbücher**: Viele Hörbücher erscheinen als Podcast-Feed, z. B. gemeinfreie Klassiker von LibriVox. Sie laufen mit denselben Funktionen.
 - Sicherheit: Shownotes werden als reiner Text angezeigt (kein eingeschleuster Code). Der Server lädt Feeds nur von öffentlichen Adressen (SSRF-Schutz).
 - Demo-Podcast **„Melody Insider“** mit 3 Folgen (zwei Moderatoren, synthetische Stimmen) unter `podcasts/`.
+
+### 🔎 Suche über alles
+- **Ein Suchfeld für alles**: Songs, Künstler, Alben, Playlists, Podcasts und Folgen, Radiosender und **Liedtexte**. „Wie heißt das Lied mit … ?“ findet den Song über eine Textzeile und spielt **ab genau dieser Zeile**.
+- Wortanfänge genügen, Umlaute egal („uber“ findet „Über“, „strasse“ findet „Straße“), Treffer werden hervorgehoben.
+- Stöbern nach Genre und Stimmung, letzte Suchen, schnell erreichbar mit **/** oder **Strg+K**.
+
+### 📊 Melody-Rückblick
+- Deine Hörstatistik als **Story zum Durchwischen**: Hörzeit, Top-Songs, Top-Künstler, Lieblings-Genres, Podcasts und Radio, für Woche, Monat, Jahr oder alles.
+- **Dein Hörtyp**: Frühaufsteher:in, Tagträumer:in, Feierabend-Fan oder Nachteule, je nachdem, wann du am meisten hörst.
+- **Als Bild teilen** (1080 × 1350, passend für Instagram und WhatsApp). Alles wird nur auf dem Gerät gezählt, nichts geht an einen Server.
+
+### 📱 Melody Connect – alle Geräte, eine Musik
+- Melody auf Handy, Laptop, Tablet oder Fernseher mit demselben Konto: **Alle Geräte sehen sich gegenseitig**, live.
+- **Fernbedienung**: Abspielen, Pause, Weiter, Zurück, Springen und Lautstärke eines anderen Geräts steuern, z. B. die Musik am Laptop vom Handy aus.
+- **„Hierher holen“**: Die Musik wechselt mit einem Tipp vom Laptop aufs Handy, an genau derselben Stelle, und der Laptop pausiert. **„Dort abspielen“** schickt sie zurück. Klappt mit Katalog-Songs, eigenen Songs (wenn auf beiden Geräten vorhanden), Podcasts und Radio.
+- Spielt ein anderes Gerät, zeigt eine Leiste **„Läuft auf …“** den Titel, mit Pause- und Hierher-Knopf. Geräte lassen sich umbenennen („Mustafas Handy“).
+- Technik: eine Live-Verbindung (Server-Sent Events) pro Gerät. Übertragen werden nur Titel, Position und Lautstärke zwischen den eigenen Geräten; der Server hält das nur im Arbeitsspeicher. Beim Abmelden endet die Verbindung dieses Geräts sofort.
+
+### 🧒 Kinder-Modus
+- Eine **bunte, einfache Ansicht** für Kinder: große Bild-Kacheln statt Menüs, große Knöpfe, Mitsingen mit einem Tipp.
+- **Gesperrt** ist alles andere: keine Käufe, kein Radio, keine KI, keine Einstellungen, keine Suche, keine Tastenkürzel. Neu laden hilft nicht, raus geht es **nur mit der Eltern-PIN**.
+- **Musik pro Tag** (15 Minuten bis 2 Stunden), **Schlafenszeit** (bis 6 Uhr morgens keine Musik) mit sanftem Ausblenden und einem Gute-Nacht-Bildschirm. Eltern können per PIN „+15 Minuten“ oder „Heute 30 Minuten länger“ geben.
+- **Gehörschutz**: eine Lautstärke-Grenze (50 bis 100 %), die auch für Fernsteuerung gilt.
+- Die Eltern wählen die Musik: Melody-Katalog, Lieblingssongs oder eine Playlist. In Melody Connect sieht man, welches Gerät im Kinder-Modus ist, und kann es fernsteuern.
+- Schutz: Die PIN wird nur gehasht gespeichert, leicht zu ratende PINs (1111, 1234 …) werden abgelehnt, nach 5 falschen Versuchen ist 60 Sekunden Pause.
+
+### ♿ Barrierefreiheit & Bedienkomfort
+- **Große Schrift** (zwei Stufen), **hoher Kontrast**, **weniger Bewegung** (keine Animationen, ruhige Party-Lichter) in den Einstellungen.
+- **Titel ansagen**: Melody sagt bei jedem neuen Lied Titel und Künstler an, die Musik wird dabei leiser. Screenreader bekommen die Ansage automatisch.
+- Volle **Tastaturbedienung**: Sprung-Link zum Inhalt, sichtbarer Fokus, Fokus bleibt in offenen Fenstern und kehrt danach zurück, Leertaste löst Knöpfe aus, **?** zeigt alle Kürzel.
+- **Ziehen zum Sortieren**: Titel in Playlists und in der Warteschlange am Griff verschieben, mit Maus, Finger oder Pfeiltasten.
+- **Wischen** über den Mini-Player auf dem Handy: nächstes / vorheriges Lied.
 
 ### 🎉 Party & 🌙 Entspannen
 - **Party-Modus**: Vollbild-Lichtshow im Takt der Musik, Übergänge von 6 s zwischen den Songs, Klang „Melody Party“, DJ-Pads. Beim Beenden kommt der eigene Sound zurück. Die Lichtshow pulsiert sanft, ohne Stroboskop, und bleibt bei „Bewegung reduzieren“ ruhig.
@@ -151,6 +185,7 @@ Wichtig für den Betrieb:
 2. Hinter einem Proxy (nginx, Render, Fly …) `TRUST_PROXY=1` setzen.
 3. Die Datenbank `server/data/melody.db` (bzw. `MELODY_DB`) auf einem dauerhaften Laufwerk ablegen und **täglich sichern**.
 4. Immer **HTTPS** verwenden.
+5. Melody Connect nutzt eine dauerhafte Verbindung (`/api/connect/stream`). Bei nginx sorgt der Header `X-Accel-Buffering: no` automatisch dafür, dass nichts gepuffert wird; ein `proxy_read_timeout` von mindestens 60 s genügt (der Server sendet alle 25 s ein Lebenszeichen). Bei mehreren Server-Instanzen müssen alle Geräte eines Kontos auf derselben Instanz landen (Sticky Sessions) oder die Verbindungen über Redis verteilt werden.
 
 ### Stripe einrichten
 1. Konto auf [stripe.com](https://stripe.com) anlegen und den geheimen Schlüssel als `STRIPE_SECRET_KEY` hinterlegen.
@@ -211,6 +246,16 @@ js/foryou.js               KI-Empfehlungen + eingebaute Empfehlungs-Engine
 js/studio.js               Sound-Studio: Melody-Sound, Ranking, DJ-Pult, Equalizer
 js/player.js               Audio-Engine: 2 Decks, Crossfade, Effekte, Stimmentfernung
 js/db.js, js/tags.js       Lokale Musikbibliothek, ID3-Tags & Cover
+js/catalog.js, js/share.js Melody-Katalog, Downloads, geteilte Playlists
+js/drive.js, js/party.js   Fahrermodus (Karte, Navigation, Sprache), Party-Modus
+js/fitness.js, js/bpm.js   Fitness-Modus, Tempo-Erkennung
+js/recognize.js            Song erkennen (js/fingerprint.js: Audio-Fingerabdruck)
+js/podcasts.js             Podcasts & Hörbücher
+js/search.js               Suche über alles, auch Liedtexte
+js/recap.js                Melody-Rückblick (Hörstatistik, Story, Bild zum Teilen)
+js/connect.js              Melody Connect: Geräte sehen, fernsteuern, Musik mitnehmen
+js/kids.js                 Kinder-Modus mit Eltern-PIN, Zeitlimit, Gehörschutz
+js/a11y.js                 Barrierefreiheit, Ansagen, Ziehen zum Sortieren, Wischgesten
 legal/                     Impressum, AGB, Datenschutz, Widerruf (Vorlagen)
 server/config.js           ★ Preise, Testphase, KI-Limit
 server/index.js            HTTP-Server & API
@@ -218,6 +263,9 @@ server/auth.js             Konten & Sitzungen (scrypt-Passwörter, HttpOnly-Cook
 server/billing.js          Stripe-Abos, Gutscheine, Webhooks, Testmodus
 server/ai.js               KI-Mix über die Claude API (strukturierte Antwort)
 server/lyrics.js           Lyrics-Suche mit Cache
+server/recognize.js        Song-Erkennung (eigener Katalog + optional AudD)
+server/podcasts.js         Podcast-Suche und Feeds (mit SSRF-Schutz)
+server/connect.js          Melody Connect: Live-Verbindung zwischen den Geräten
 server/test/               Automatische Tests
 ```
 
@@ -228,3 +276,4 @@ server/test/               Automatische Tests
 - Begrenzung von Anmelde-, Registrierungs- und Gutschein-Versuchen.
 - Kartendaten erreichen den Server nie, die Zahlung läuft über Stripe. Webhooks werden per Signatur geprüft.
 - Keine Werbung, keine Tracker. Das Ranking der Klangprofile zählt nur anonym.
+- Hörstatistik (Rückblick) und Kinder-Modus-Einstellungen bleiben auf dem Gerät. Melody Connect verbindet nur Geräte desselben Kontos; Befehle an fremde Geräte werden abgelehnt.

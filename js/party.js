@@ -6,7 +6,7 @@ import { localMix } from './foryou.js';
 import { loadCatalog, ensureTracks, playable } from './catalog.js';
 
 const P = { open: false, saved: null, raf: 0, lights: true, wake: null };
-const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduceMotion = () => document.documentElement.classList.contains('calm') || matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 async function startSomething(mood) {
   if (player.playing) return;

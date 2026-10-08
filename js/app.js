@@ -12,15 +12,20 @@ import { partyActions, closeParty, isPartyOpen } from './party.js';
 import { fitnessActions, closeFitness, isFitnessOpen, onFitnessInput, openFitness } from './fitness.js';
 import { viewRecognize, recognizeActions, onRecognizeChange, listen as recognizeListen } from './recognize.js';
 import { openDrive } from './drive.js';
+import { viewRecap, recapActions, homeTeaser } from './recap.js';
+import { startConnect, stopConnect, connectActions, onConnectInput, onConnectChange, onSheetClosed } from './connect.js';
+import { viewSearch, afterSearchRender, onSearchInput, openSearch, searchActions, searchForms } from './search.js';
 import { viewPodcasts, viewPodcast, podcastActions, podcastForms, homeSection as podHome, refreshSubscriptions, fmtTime as podTime } from './podcasts.js';
 import { DEMO } from './api.js';
+import { a11y, applyA11y, setA11y, TEXT_SIZES, trapTab, dragKey, registerSorter } from './a11y.js';
+import { kidsActions, kidsForms, kidsActive, kidsAllows, kidsKey, onKidsInput, initKids, refreshKids } from './kids.js';
 import { viewStudio, afterStudioRender, studioActions, onStudioInput, reportPreset } from './studio.js';
 import {
   $, esc, fmt, fmtLong, hue, plural, byText, toast, state, hooks, getTrack, go,
   coverUrl, coverHTML, groupCover, setRangeP, openSheet, closeSheet, promptSheet, confirmSheet,
 } from './core.js';
 
-const VERSION = '2.0.0';
+const VERSION = '3.0.0';
 
 const UI_KEY = 'melody.ui';
 const ui = (() => {
@@ -87,16 +92,20 @@ const MIXES = [
 // ---------- Navigation ----------
 const NAV = [
   { id: 'home', label: 'Start', icon: 'home', mobile: true },
-  { id: 'discover', label: 'Entdecken', icon: 'explore', mobile: true },
+  { id: 'search', label: 'Suchen', icon: 'search', mobile: true },
+  { id: 'discover', label: 'Entdecken', icon: 'explore' },
   { id: 'podcasts', label: 'Podcasts', icon: 'podcast', mobile: true },
   { id: 'foryou', label: 'Für dich', icon: 'sparkle' },
   { id: 'library', label: 'Bibliothek', icon: 'library', mobile: true },
   { id: 'playlists', label: 'Playlists', icon: 'playlist' },
+  { id: 'recap', label: 'Rückblick', icon: 'chart' },
   { id: 'radio', label: 'Radio', icon: 'radio' },
   { id: 'studio', label: 'Sound-Studio', icon: 'tune' },
   { id: 'drive', label: 'Fahrermodus', icon: 'car', action: 'drive' },
   { id: 'fitness', label: 'Fitness', icon: 'fitness', action: 'fitness' },
+  { id: 'kids', label: 'Kinder-Modus', icon: 'kids', action: 'kids' },
   { id: 'recognize', label: 'Song erkennen', icon: 'waves' },
+  { id: 'devices', label: 'Geräte', icon: 'devices', action: 'connect' },
   { id: 'account', label: 'Konto & Abo', icon: 'account' },
   { id: 'settings', label: 'Einstellungen', icon: 'settings' },
 ];
@@ -135,6 +144,8 @@ const VIEWS = {
   discover: viewDiscover,
   recognize: viewRecognize,
   podcasts: viewPodcasts,
+  search: viewSearch,
+  recap: viewRecap,
   podcast: viewPodcast,
   shared: viewShared,
 };
@@ -150,7 +161,13 @@ function render() {
   const fab = $('#rc-fab');
   if (fab) fab.hidden = view === 'recognize';
   const navView = { album: 'library', artist: 'library', playlist: 'playlists', premium: 'account', shared: 'playlists', podcast: 'podcasts' }[view] || view;
-  document.querySelectorAll('.nav-item').forEach((el) => el.classList.toggle('active', el.dataset.view === navView));
+  document.querySelectorAll('.nav-item').forEach((el) => {
+    const on = el.dataset.view === navView;
+    el.classList.toggle('active', on);
+    if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
+  });
+  const h1 = main.querySelector('h1')?.textContent.trim();
+  document.title = h1 && h1 !== 'Melody' ? `${h1} · Melody` : 'Melody';
   afterRender(view);
 }
 
@@ -162,6 +179,7 @@ function afterRender(view) {
   }
   if (view === 'settings') updateStorageInfo();
   if (view === 'account') afterAccountRender();
+  if (view === 'search') afterSearchRender();
   const q = state.route.query;
   if (q.get('mode') === 'drive') { history.replaceState(null, '', '#/home'); openDrive(); }
   if (q.get('mode') === 'fitness') { history.replaceState(null, '', '#/home'); openFitness(); }
@@ -181,9 +199,11 @@ function trackRows(tracks, opts = {}) {
   if (!tracks.length) return `<div class="empty">${icon('note')}<div>${opts.empty || 'Keine Titel'}</div></div>`;
   const key = registerList(tracks.map((t) => t.id));
   const cur = player.mode === 'library' ? player.currentId : null;
-  return `<div class="tracks">${tracks.map((t, i) => `
-    <div class="track${t.id === cur ? ' current' : ''}${playable(t) ? '' : ' unavailable'}" data-action="play-in" data-list="${key}" data-index="${i}" data-id="${t.id}">
-      <span class="num">${opts.trackNo ? t.trackNo || i + 1 : i + 1}</span>
+  const sort = opts.sortable && tracks.length > 1;
+  return `<div class="tracks${sort ? ' sortable' : ''}"${sort ? ` data-sort="${esc(opts.sortable)}"` : ''}>${tracks.map((t, i) => `
+    <div class="track${t.id === cur ? ' current' : ''}${playable(t) ? '' : ' unavailable'}" data-action="play-in" data-list="${key}" data-index="${i}" data-id="${t.id}"${sort ? ' data-sort-item' : ''}>
+      ${sort ? `<button class="num drag-handle" data-drag data-action="drag-noop" aria-label="${esc(t.title)} verschieben (Pfeiltasten hoch/runter)" title="Ziehen zum Verschieben">${icon('drag')}</button>`
+        : `<span class="num">${opts.trackNo ? t.trackNo || i + 1 : i + 1}</span>`}
       ${coverHTML(t, 'sm')}
       <div class="meta">
         <div class="t">${esc(t.title)}</div>
@@ -240,6 +260,7 @@ const MODES_HTML = () => `<div class="modes">
   <button class="mode drive-m" data-action="drive">${icon('car')}<b>Fahren</b><span>Karte, Navigation & Sprachsteuerung</span></button>
   <button class="mode party-m" data-action="party">${icon('party')}<b>Party</b><span>Lichtshow & DJ-Übergänge</span></button>
   <button class="mode fit-m" data-action="fitness">${icon('fitness')}<b>Fitness</b><span>Musik im Trainings-Tempo, Timer & Coach</span></button>
+  <button class="mode kids-m" data-action="kids">${icon('kids')}<b>Kinder</b><span>Bunt, sicher, mit Eltern-PIN & Zeitlimit</span></button>
   <button class="mode chill-m" data-action="chill">${icon('moon')}<b>Entspannen</b><span>Weicher Klang, endet nach 30 Min.</span></button>
 </div>`;
 
@@ -299,6 +320,7 @@ function viewHome() {
       <div class="tabs">${Object.entries(MOODS).slice(0, 6).map(([name, m]) => `<button class="chip" data-action="ai-mood" data-mood="${name}">${m.emoji} ${name}</button>`).join('')}</div>
     </section>
     <div id="home-catalog"></div>
+    ${homeTeaser()}
     ${podHome()}
     <h2>Smart-Mixe</h2>
     <div class="grid">${MIXES.map((m) => {
@@ -422,7 +444,7 @@ function viewPlaylist() {
   if (!p) return `<button class="chip back" data-action="back">${icon('back')}Zurück</button><div class="empty">Playlist nicht gefunden</div>`;
   const tracks = p.trackIds.map(getTrack).filter(Boolean);
   const total = tracks.reduce((s, t) => s + (t.duration || 0), 0);
-  const rows = trackRows(tracks, { playlistId: p.id, empty: 'Diese Playlist ist leer. Füge Titel über das ⋮-Menü hinzu.' });
+  const rows = trackRows(tracks, { playlistId: p.id, sortable: 'pl:' + p.id, empty: 'Diese Playlist ist leer. Füge Titel über das ⋮-Menü hinzu.' });
   return `<button class="chip back" data-action="back">${icon('back')}Zurück</button>
     <div class="hero">${groupCover(tracks, 'lg', p.name, 'playlist')}
       <div><div class="kind">Playlist</div><h1>${esc(p.name)}</h1>
@@ -540,6 +562,17 @@ function viewSettings() {
         ${ACCENTS.map((c) => `<button class="swatch${ui.accent === c ? ' on' : ''}" style="--c:${c}" data-action="accent" data-color="${c}" aria-label="Farbe ${c}"></button>`).join('')}
       </div></div>
     </div>
+    <div class="panel" id="a11y-panel"><h3>${icon('accessibility')} Barrierefreiheit</h3>
+      <div class="setting"><span>Schriftgröße</span><div class="row" role="group" aria-label="Schriftgröße">
+        ${TEXT_SIZES.map(([v, l]) => `<button class="chip${a11y.text === v ? ' on' : ''}" data-action="a11y-text" data-v="${v}" aria-pressed="${a11y.text === v}">${l}</button>`).join('')}
+      </div></div>
+      ${[['contrast', 'Hoher Kontrast', 'Kräftigere Schrift, Rahmen und Fokus-Markierung'],
+    ['calm', 'Weniger Bewegung', 'Keine Animationen, ruhige Party-Lichter'],
+    ['speak', 'Titel ansagen', 'Melody sagt bei jedem neuen Lied Titel und Künstler an']].map(([k, l, d]) => `
+      <div class="setting"><div><div id="a11y-${k}">${l}</div><div class="muted" style="font-size:13px">${d}</div></div>
+        <label class="switch"><input type="checkbox" data-a11y="${k}" aria-labelledby="a11y-${k}" ${a11y[k] ? 'checked' : ''}><span></span></label></div>`).join('')}
+      <p class="muted" style="font-size:13px;margin:8px 0 0">Playlists und Warteschlange lassen sich am Griff ${icon('drag')} verschieben – mit Maus, Finger oder Pfeiltasten. Auf dem Handy wischst du über den Mini-Player zum nächsten Lied. Taste <b>?</b> zeigt alle Tastenkürzel.</p>
+    </div>
     <div class="panel"><h3>Wiedergabe</h3>
       <div class="setting"><div><div>Audio-Effekte</div><div class="muted" style="font-size:13px">Equalizer & Visualizer${isIOS ? '. Hinweis: Auf iOS stoppt die Musik damit bei gesperrtem Bildschirm.' : ''}</div></div>
         <label class="switch"><input type="checkbox" data-setting="fx" ${s.fx ? 'checked' : ''}><span></span></label></div>
@@ -560,7 +593,7 @@ function viewSettings() {
       </div>
     </div>
     <div class="panel"><h3>Tastenkürzel</h3>
-      <p>Leertaste: Play/Pause · ←/→: 10 s spulen · Umschalt + ←/→: Titel zurück/vor · F: Favorit · ↑/↓: Lautstärke</p></div>
+      <p>Leertaste: Play/Pause · ←/→: 10 s spulen · Umschalt + ←/→: Titel zurück/vor · F: Favorit · ↑/↓: Lautstärke · / oder Strg+K: Suchen · S: Song erkennen · ?: Alle Kürzel</p></div>
     <div class="panel"><h3>Über Melody</h3>
       <p>Deine Musik bleibt auf deinem Gerät. Melody sammelt keine Daten und zeigt niemals Werbung. Radiosender stammen aus dem freien Verzeichnis radio-browser.info.</p></div>`;
 }
@@ -624,16 +657,40 @@ function queueSheet() {
   const upcoming = q.slice(player.index + 1, player.index + 101);
   openSheet(`<h3>Wird gespielt</h3>${cur ? sheetHead(cur) : '<p class="muted">Nichts</p>'}
     <h3 style="margin-top:14px">Als Nächstes${player.shuffle ? ' (Zufall)' : ''}</h3>
-    ${upcoming.length ? upcoming.map((id, k) => {
+    ${upcoming.length ? `<div data-sort="queue" data-base="${player.index + 1}">${upcoming.map((id, k) => {
       const t = getTrack(id);
-      if (!t) return '';
       const i = player.index + 1 + k;
-      return `<div class="track q" data-action="q-jump" data-index="${i}">${coverHTML(t, 'sm')}
+      if (!t) return `<div data-sort-item hidden></div>`;
+      return `<div class="track q" data-action="q-jump" data-index="${i}" data-sort-item>
+        <button class="drag-handle" data-drag data-action="drag-noop" aria-label="${esc(t.title)} verschieben (Pfeiltasten hoch/runter)">${icon('drag')}</button>${coverHTML(t, 'sm')}
         <div class="meta"><div class="t">${esc(t.title)}</div><div class="a">${esc(t.artist)}</div></div>
-        <button class="icon-btn" data-action="q-remove" data-index="${i}" aria-label="Entfernen">${icon('close')}</button></div>`;
-    }).join('') : '<p class="muted" style="padding:0 8px">Die Warteschlange ist leer.</p>'}
+        <button class="icon-btn" data-action="q-remove" data-index="${i}" aria-label="${esc(t.title)} entfernen">${icon('close')}</button></div>`;
+    }).join('')}</div>` : '<p class="muted" style="padding:0 8px">Die Warteschlange ist leer.</p>'}
     ${q.length - player.index - 1 > 100 ? `<p class="muted" style="padding:0 8px">… und ${q.length - player.index - 101} weitere</p>` : ''}`);
 }
+
+function shortcutsSheet() {
+  const keys = [['Leertaste', 'Abspielen / Pause'], ['← / →', '10 Sekunden zurück / vor (Podcasts: 15 / 30)'],
+    ['Umschalt + ← / →', 'Vorheriger / nächster Titel'], ['↑ / ↓', 'Lauter / leiser'], ['F', 'Lieblingssong an / aus'],
+    ['/ oder Strg + K', 'Suchen'], ['S', 'Song erkennen'], ['Esc', 'Schließen'], ['Tab / Umschalt + Tab', 'Zum nächsten / vorigen Bedienelement'],
+    ['↑ / ↓ am Griff', 'Titel in Playlist oder Warteschlange verschieben'], ['?', 'Diese Übersicht']];
+  openSheet(`<h3>Tastenkürzel</h3><dl class="keys">${keys.map(([k, d]) => `<div><dt><kbd>${k}</kbd></dt><dd>${d}</dd></div>`).join('')}</dl>`);
+}
+
+registerSorter('pl', (from, to, id) => {
+  const p = state.playlists.find((x) => x.id === id);
+  if (!p) return;
+  p.trackIds = p.trackIds.filter((x) => getTrack(x));
+  const [moved] = p.trackIds.splice(from, 1);
+  p.trackIds.splice(to, 0, moved);
+  rerenderKeepScroll();
+  db.put('playlists', p).catch(() => toast('Reihenfolge konnte nicht gespeichert werden.'));
+});
+registerSorter('queue', (from, to, _arg, list) => {
+  const base = +list.dataset.base;
+  player.moveInQueue(base + from, base + to);
+  queueSheet();
+});
 
 function sleepSheet() {
   const active = player.sleepUntil ? `Endet in ${Math.ceil((player.sleepUntil - Date.now()) / 60000)} Min.` : player.sleepAtEnd ? 'Endet nach diesem Titel' : '';
@@ -1109,6 +1166,10 @@ const ACTIONS = {
   },
   'radio-retry': () => searchRadio(),
   theme: (el) => { ui.theme = el.dataset.theme; saveUi(); applyTheme(); render(); },
+  'a11y-text': (el) => { setA11y('text', +el.dataset.v); rerenderKeepScroll(); },
+  'skip-main': () => { const m = $('#main'); m.focus(); m.scrollTop = 0; },
+  'drag-noop': () => {},
+  shortcuts: () => shortcutsSheet(),
   accent: (el) => { ui.accent = el.dataset.color; saveUi(); applyTheme(); render(); },
   install: async () => {
     const p = state.installPrompt;
@@ -1130,8 +1191,8 @@ const ACTIONS = {
   },
 };
 
-Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions, driveActions, partyActions, fitnessActions, recognizeActions, podcastActions);
-const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms, ...driveForms, ...podcastForms };
+Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions, driveActions, partyActions, fitnessActions, recognizeActions, podcastActions, searchActions, recapActions, connectActions, kidsActions);
+const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms, ...driveForms, ...podcastForms, ...searchForms, ...kidsForms };
 
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-action]');
@@ -1139,6 +1200,7 @@ document.addEventListener('click', (e) => {
   const fn = ACTIONS[el.dataset.action];
   if (!fn) return;
   e.preventDefault();
+  if (kidsActive() && !kidsAllows(el)) return;
   fn(el, e);
 });
 
@@ -1147,6 +1209,7 @@ document.addEventListener('submit', async (e) => {
   if (!form) return;
   e.preventDefault();
   const kind = form.dataset.form;
+  if (kidsActive() && !kidsAllows(form)) return;
   if (FORMS[kind]) return FORMS[kind](form);
   if (kind === 'prompt') closeSheet(form.v.value.trim() || null);
   else if (kind === 'confirm') closeSheet(true);
@@ -1170,7 +1233,7 @@ document.addEventListener('submit', async (e) => {
 
 document.addEventListener('input', (e) => {
   const el = e.target;
-  if (onLyricsInput(el) || onStudioInput(el) || onFitnessInput(el)) return;
+  if (onKidsInput(el) || onConnectInput(el) || onSearchInput(el) || onLyricsInput(el) || onStudioInput(el) || onFitnessInput(el)) return;
   if (el.id === 'lib-search') {
     state.libQuery = el.value;
     rerenderKeepScroll();
@@ -1196,7 +1259,8 @@ document.addEventListener('input', (e) => {
 
 document.addEventListener('change', (e) => {
   const el = e.target;
-  if (onRecognizeChange(el)) return;
+  if (onRecognizeChange(el) || onConnectChange(el)) return;
+  if (el.dataset.a11y) { setA11y(el.dataset.a11y, el.checked); return; }
   if (el.id === 'np-seek') {
     player.seek((el.value / 1000) * (player.media.duration || 0));
     seeking = false;
@@ -1219,6 +1283,8 @@ document.addEventListener('change', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
+  if (kidsActive()) return kidsKey(e);
+  if (trapTab(e) || dragKey(e)) return;
   if (e.key === 'Escape') {
     if (!$('#sheet').hidden) closeSheet();
     else if (isSingOpen()) closeSing();
@@ -1228,7 +1294,11 @@ document.addEventListener('keydown', (e) => {
     else closeNowPlaying();
     return;
   }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openSearch(); return; }
   if (e.target.closest('input, select, textarea') || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === '/') { e.preventDefault(); openSearch(); return; }
+  if (e.key === '?') { e.preventDefault(); shortcutsSheet(); return; }
+  if (e.target.closest('button, a, [role=slider]') && (e.key === ' ' || e.key === 'Enter')) return; // native activation
   const radio = player.mode === 'radio';
   if (e.key === ' ') { e.preventDefault(); player.toggle(); }
   else if (e.key === 'ArrowRight') { e.preventDefault(); e.shiftKey ? player.next() : !radio && player.seek(player.media.currentTime + (player.mode === 'podcast' ? 30 : 10)); }
@@ -1248,7 +1318,7 @@ document.addEventListener('keydown', (e) => {
 // Drag & drop import (desktop).
 let dragDepth = 0;
 window.addEventListener('dragenter', (e) => {
-  if (!e.dataTransfer?.types?.includes('Files')) return;
+  if (!e.dataTransfer?.types?.includes('Files') || kidsActive()) return;
   dragDepth++;
   $('#drop-hint').hidden = false;
 });
@@ -1260,7 +1330,7 @@ window.addEventListener('drop', (e) => {
   e.preventDefault();
   dragDepth = 0;
   $('#drop-hint').hidden = true;
-  if (e.dataTransfer?.files?.length) importFiles(e.dataTransfer.files);
+  if (e.dataTransfer?.files?.length && !kidsActive()) importFiles(e.dataTransfer.files);
 });
 
 window.addEventListener('hashchange', () => { closeSheet(); render(); });
@@ -1292,17 +1362,30 @@ hooks.createPlaylist = createPlaylist;
 hooks.reportPreset = reportPreset;
 hooks.play = (ids, i) => player.playList(ids, i);
 hooks.toggleFav = toggleFav;
+hooks.prompt = promptSheet;
+hooks.sheetClosed = onSheetClosed;
+hooks.syncVolume = () => { const v = $('#pb-volume'); if (v) { v.value = player.settings.volume; setRangeP(v); } };
+hooks.accountChanged = (a) => (a?.access && !a.offline ? startConnect() : stopConnect());
 hooks.sing = openSing;
 hooks.recognize = () => recognizeListen();
 hooks.closeSheet = closeSheet;
 hooks.go = go;
+hooks.closeOverlays = () => {
+  if (isSingOpen()) closeSing();
+  if (isPartyOpen()) closeParty();
+  if (isFitnessOpen()) closeFitness();
+  if (isDriveOpen()) closeDrive();
+  closeNowPlaying();
+};
 window.addEventListener('online', () => { toast('Wieder online'); rerenderKeepScroll(); });
 window.addEventListener('offline', () => { toast('Offline – heruntergeladene Musik läuft weiter'); rerenderKeepScroll(); });
 
 async function boot() {
   applyTheme();
+  applyA11y();
   renderNav();
   hydrateIcons(document);
+  initKids();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW', e));
   }
@@ -1321,6 +1404,7 @@ async function boot() {
   render();
   await player.restore();
   updatePlayerUI();
+  refreshKids();
   refreshSubscriptions().catch(() => {});
 }
 

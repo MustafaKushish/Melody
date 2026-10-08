@@ -88,18 +88,26 @@ export function setRangeP(input) {
 
 // ---------- Sheets (menus & dialogs) ----------
 let sheetResolve = null;
+let sheetOpener = null; // focus returns here when the sheet closes (keyboard & screen-reader users)
 export function openSheet(html) {
   const sheet = $('#sheet');
+  if (sheet.hidden) sheetOpener = document.activeElement !== document.body ? document.activeElement : null;
   sheet.innerHTML = html;
   hydrateIcons(sheet);
   sheet.hidden = false;
   $('#sheet-backdrop').hidden = false;
   const first = sheet.querySelector('input:not([type=checkbox]), textarea');
   if (first) setTimeout(() => first.focus(), 50);
+  else if (!sheet.contains(document.activeElement)) { sheet.tabIndex = -1; sheet.focus({ preventScroll: true }); }
 }
 export function closeSheet(result = null) {
-  $('#sheet').hidden = true;
+  hooks.sheetClosed?.();
+  const sheet = $('#sheet');
+  const hadFocus = sheet.contains(document.activeElement);
+  sheet.hidden = true;
   $('#sheet-backdrop').hidden = true;
+  if (hadFocus && sheetOpener?.isConnected) sheetOpener.focus({ preventScroll: true });
+  sheetOpener = null;
   state.menu = null;
   if (sheetResolve) {
     const r = sheetResolve;

@@ -748,6 +748,16 @@ class Player extends EventTarget {
     this.emit('queue');
   }
 
+  // Reorder upcoming songs (the current one stays where it is).
+  moveInQueue(from, to) {
+    const n = this.queue.length;
+    if (from === to || from <= this.index || to <= this.index || from >= n || to >= n) return;
+    const [id] = this.queue.splice(from, 1);
+    this.queue.splice(to, 0, id);
+    this.saveState();
+    this.emit('queue');
+  }
+
   // Remove a deleted track everywhere.
   forget(id) {
     const cur = this.currentId;
@@ -826,6 +836,7 @@ class Player extends EventTarget {
   }
 
   setVolume(v) {
+    v = Math.min(v, this.volumeCap ?? 1); // Kinder-Modus: hearing protection limit
     this.settings.volume = v;
     for (const deck of this.decks) deck.volume = v;
     this.radioEl.volume = v;
@@ -860,7 +871,7 @@ class Player extends EventTarget {
     this.emit('sleep');
   }
 
-  fadeOutAndPause() {
+  fadeOutAndPause(silent = false) {
     const m = this.media;
     const start = m.volume;
     let step = 0;
@@ -871,6 +882,7 @@ class Player extends EventTarget {
         clearInterval(iv);
         m.pause();
         m.volume = this.settings.volume;
+        if (silent) return;
         this.sleepTimer = null;
         this.sleepUntil = 0;
         this.emit('sleep', 'done');
