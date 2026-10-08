@@ -1,5 +1,6 @@
 # Baut Melody für Windows (Setup.exe) und stellt es als Release zum Herunterladen bereit.
-# Start: automatisch bei einem Versions-Tag (z. B. v3.0.0) oder von Hand unter „Actions“.
+# Start: automatisch bei einem Versions-Tag (z. B. v3.0.0) oder von Hand unter „Actions“ → „Run workflow“
+# (dann gilt die Version aus desktop/package.json).
 name: Windows-Setup
 
 on:
@@ -30,11 +31,16 @@ jobs:
         with:
           name: Melody-Setup
           path: desktop/dist/Melody-Setup-*.exe
+      - name: Version lesen
+        id: v
+        shell: bash
+        run: echo "tag=v$(node -p "require('./desktop/package.json').version")" >> "$GITHUB_OUTPUT"
       - name: Release veröffentlichen
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          name: Melody ${{ github.ref_name }}
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || steps.v.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Melody ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || steps.v.outputs.tag }}
           body: |
             **Melody für Windows** – Setup herunterladen, doppelklicken, installieren.
             Beim ersten Start zeigt Windows evtl. „Der Computer wurde durch Windows geschützt“: auf „Weitere Informationen“ → „Trotzdem ausführen“ klicken.
