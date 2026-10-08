@@ -44,7 +44,7 @@ export async function ensureTrack(c) {
   const t = {
     id, source: 'catalog', catalogId: c.id, url: 'catalog/' + c.audio,
     title: c.title, artist: c.artist, albumArtist: '', album: c.album, year: c.year || '', genre: c.genre || '',
-    trackNo: 0, duration: c.duration, cover, size: c.size || 0, fileName: c.audio, type: 'audio/mpeg',
+    trackNo: 0, duration: c.duration, bpm: c.bpm || 0, cover, size: c.size || 0, fileName: c.audio, type: 'audio/mpeg',
     addedAt: Date.now(), favorite: false, plays: 0, downloaded: false,
     lyrics: lrc ? { synced: lrc, plain: '', source: 'katalog' } : undefined,
   };

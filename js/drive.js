@@ -150,6 +150,7 @@ export function handleCommand(text) {
   if (/leiser/.test(t)) return setVol(-0.15);
   if (/(gefällt mir|favorit|like)/.test(t)) { if (player.track) hooks.toggleFav(player.track); return; }
   if (/(wie lange|wann .*an|ankunft)/.test(t) && D.route) return speak(etaSpeech());
+  if (/(welcher song|welches lied|was läuft|wie heißt (der|das) (song|lied))/.test(t)) return hooks.recognize?.();
   if ((m = t.match(/^(?:spiel\w*|hör\w*|play|leg)\s*(?:auf\s*)?(.*)$/))) return playQuery(m[1]);
   speak('Das habe ich nicht verstanden.');
 }

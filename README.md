@@ -33,6 +33,23 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 - Hoch- und Querformat, damit es auch in einer Handyhalterung oder auf einem Tablet am Armaturenbrett passt.
 - Mit „Beenden“ geht es zurück; die Musik läuft weiter, auch im Hintergrund.
 
+### 🏋️ Fitness-Modus
+- **6 Trainingsarten**: Krafttraining, HIIT, Tabata, Laufen, Cardio & Spinning, Yoga & Dehnen.
+- **Musik im richtigen Tempo**: Melody misst das Tempo (BPM) jedes Songs automatisch und wählt passende Titel, vom Aufwärmen bis zum Höhepunkt. Ein 82-BPM-Song zählt beim Laufen auch als 164 BPM.
+- **Intervall-Timer** (HIIT 30/30, Tabata 20/10) mit großem Ring, Farben (grün = los, blau = Pause), Countdown-Pieptönen und **Sprach-Coach** („Runde 3. Los!“, „Letzte Runde! Gib alles!“). In Pausen wird die Musik leiser.
+- **Krafttraining**: „Satz fertig“ antippen, und der Satzpausen-Timer läuft (60, 90, 120 oder 180 s). Sätze werden mitgezählt.
+- **Laufen**: Das Handy misst das Schritt-Tempo über den Bewegungssensor. Die Musik passt sich an (±8 %, Tonhöhe bleibt).
+- **Power-Knopf** ⚡: sofort der schnellste passende Song.
+- **Großbildschirm**: Vollbild für Trainer, z. B. auf dem Fernseher im Kursraum.
+- Trainingsverlauf mit Wochenübersicht. Klang und Tempo werden nach dem Training wiederhergestellt.
+
+### 🎵 Song erkennen (wie Shazam)
+- Ein **schwebender Erkennen-Knopf auf jeder Seite**, dazu Taste **S** am Computer, Sprachbefehl im Auto („Welcher Song ist das?“) und ein **Schnellzugriff auf dem Startbildschirm** (lange auf das Melody-Symbol drücken → „Song erkennen“).
+- **Eigene Erkennung für den Melody-Katalog**, auch **offline**. Sie arbeitet mit Audio-Fingerabdrücken und wurde mit verrauschten „Handy-Aufnahmen“ getestet (Lautsprecher-Klang, Hall, starke Komprimierung). Sie erkennt sogar die Stelle im Song: **„Hier weiterhören“** spielt nahtlos dort weiter, wo die Musik gerade ist, und **„Herunterladen“** speichert den Song sofort offline.
+- **Weltweite Erkennung** aller anderen Songs über den Dienst AudD (`AUDD_API_TOKEN`, ca. 2 $ pro 1.000 Erkennungen). Treffer zeigen Links zu Apple Music, Spotify und Deezer und landen auf der **Wunschliste**. Was oft gewünscht wird, nimmt Melody als Nächstes in den Katalog auf (`GET /api/admin/wishes`).
+- Alternativ lässt sich eine Aufnahme-Datei auswählen. Die Aufnahmen werden nicht gespeichert.
+- Neue Katalog-Songs brauchen einen Fingerabdruck: `node tools/build-fingerprints.mjs`.
+
 ### 🎉 Party & 🌙 Entspannen
 - **Party-Modus**: Vollbild-Lichtshow im Takt der Musik, Übergänge von 6 s zwischen den Songs, Klang „Melody Party“, DJ-Pads. Beim Beenden kommt der eigene Sound zurück. Die Lichtshow pulsiert sanft, ohne Stroboskop, und bleibt bei „Bewegung reduzieren“ ruhig.
 - **Entspannen**: weicher Klang, ruhiger Mix, die Musik endet nach 30 Minuten.
@@ -106,7 +123,7 @@ Danach `http://localhost:8080` öffnen.
 
 Ohne Stripe-Schlüssel läuft ein **Testmodus**: Abos und Gutscheine lassen sich ausprobieren, es wird nichts abgebucht. Ohne Anthropic-Schlüssel nutzt „Für dich“ die eingebaute Empfehlungs-Engine.
 
-Tests: `npm test` (20 Tests für Konten, Abos, Gutscheine, Stripe-Webhooks, KI-Anfrage und Sicherheit).
+Tests: `npm test` (27 Tests für Konten, Abos, Gutscheine, Stripe-Webhooks, KI-Anfrage, Sicherheit, Song-Erkennung und Tempo-Messung).
 
 ### Demo ohne Server
 `tools/build-demo.sh` baut eine Version, bei der Konten und Zahlungen im Browser simuliert werden. Sie eignet sich zum Vorführen und lässt sich auf jedem statischen Hosting (z. B. GitHub Pages) betreiben.
@@ -144,10 +161,16 @@ Einen API-Schlüssel unter [console.anthropic.com](https://console.anthropic.com
 | Titel, Cover und Lenkradtasten im Autodisplay | ✅ (Media Session) | ✅ |
 | Fahrermodus mit Karte, Navigation und Sprachsteuerung auf dem Handy | ✅ | ✅ |
 | Melody **direkt auf dem Bildschirm des Autos** (Apple CarPlay / Android Auto) | ❌ technisch nicht möglich | ✅ mit Audio-App-Freigabe von Apple bzw. Android-Auto-Media-Vorlage |
+| Song-Erkennung über **Shazams eigene Datenbank** (ShazamKit), Erkennen-Knopf im Kontrollzentrum / als Widget | ❌ | ✅ ShazamKit ist für iOS und Android verfügbar (Apple-Entwicklerkonto) |
 | Navigation auf dem Autobildschirm | ❌ | nur mit Navigations-Freigabe (strenge Auflagen) |
 | Autos mit eingebautem Android (Android Automotive: Volvo, Polestar, Renault …) | ❌ | ✅ als Media-App über Google Play |
 
 Für Karten-Kacheln, Ortssuche und Routen nutzt Melody die freien OpenStreetMap-Dienste. Diese sind für Tests gedacht. Bei vielen Nutzern braucht es einen Anbieter (z. B. MapTiler, Stadia Maps, eigener OSRM-Server). Die Adressen lassen sich in `js/drive.js` (`DEFAULT_GEO`) austauschen.
+
+## 🏢 Idee: Melody für Fitnessstudios
+Studios brauchen für Musik über Lautsprecher eine **GEMA-Lizenz für öffentliche Wiedergabe**, und die kostet oft mehrere hundert Euro im Jahr. Ein **GEMA-freier Melody-Katalog** (eigene Künstler, Musik ohne Verwertungsgesellschaft) wäre ein starkes Geschäftsmodell:
+- „Melody Studio“, z. B. 29 €/Monat pro Studio: Großbildschirm-Kurstimer, Musik im Kurstempo, mehrere Räume.
+- Mitglieder hören mit ihrem eigenen Melody-Abo dieselben Kurs-Playlists zu Hause weiter.
 
 ## ⚖️ Vor dem Start mit echten Zahlungen
 

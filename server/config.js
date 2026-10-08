@@ -83,5 +83,9 @@ export const DEMO_PAYMENTS = !STRIPE_SECRET_KEY &&
 
 export const SESSION_DAYS = 60;
 
+// Weltweite Song-Erkennung (wie Shazam) über https://audd.io – ohne Token erkennt Melody nur den eigenen Katalog.
+export const AUDD_API_TOKEN = process.env.AUDD_API_TOKEN || '';
+export const AUDD_URL = process.env.AUDD_URL || 'https://api.audd.io/';
+
 // Set to 1 when running behind a reverse proxy (nginx, Render, Fly.io …) that sets X-Forwarded-For.
 export const TRUST_PROXY = process.env.TRUST_PROXY === '1';

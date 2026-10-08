@@ -13,7 +13,8 @@
    "audio": "sonnenaufgang.mp3",
    "cover": "sonnenaufgang.jpg",
    "lyrics": "sonnenaufgang.lrc",
-   "size": 782857
+   "size": 782857,
+   "bpm": 108
   },
   {
    "id": "nachtfahrt",
@@ -26,7 +27,8 @@
    "audio": "nachtfahrt.mp3",
    "cover": "nachtfahrt.jpg",
    "lyrics": "nachtfahrt.lrc",
-   "size": 686608
+   "size": 686608,
+   "bpm": 124
   },
   {
    "id": "regentropfen",
@@ -39,7 +41,8 @@
    "audio": "regentropfen.mp3",
    "cover": "regentropfen.jpg",
    "lyrics": "regentropfen.lrc",
-   "size": 1019739
+   "size": 1019739,
+   "bpm": 82
   },
   {
    "id": "sommerwind",
@@ -52,7 +55,8 @@
    "audio": "sommerwind.mp3",
    "cover": "sommerwind.jpg",
    "lyrics": "sommerwind.lrc",
-   "size": 842830
+   "size": 842830,
+   "bpm": 100
   },
   {
    "id": "energie",
@@ -65,7 +69,8 @@
    "audio": "energie.mp3",
    "cover": "energie.jpg",
    "lyrics": "energie.lrc",
-   "size": 666428
+   "size": 666428,
+   "bpm": 128
   },
   {
    "id": "gipfelglueck",
@@ -78,7 +83,8 @@
    "audio": "gipfelglueck.mp3",
    "cover": "gipfelglueck.jpg",
    "lyrics": "gipfelglueck.lrc",
-   "size": 620582
+   "size": 620582,
+   "bpm": 138
   }
  ]
 }

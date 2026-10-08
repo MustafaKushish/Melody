@@ -10,6 +10,7 @@ import {
 import { pricing, checkout, portal, demoCancel, redeemVoucher, myVouchers, voucherForSession, webhook } from './billing.js';
 import { recommend, aiEnabled, MELODY_PRESETS } from './ai.js';
 import { findLyrics } from './lyrics.js';
+import { recognize, recognitionEnabled, addWish, topWishes } from './recognize.js';
 import { PORT, PUBLIC_URL, DEMO_PAYMENTS, TRUST_PROXY, STUDENT_AUTO_APPROVE, ADMIN_TOKEN } from './config.js';
 import crypto from 'node:crypto';
 
@@ -32,7 +33,7 @@ const withAccess = (req) => {
 };
 
 route('GET', '/api/health', () => ({ ok: true }));
-route('GET', '/api/pricing', () => ({ ...pricing(), ai: aiEnabled() }));
+route('GET', '/api/pricing', () => ({ ...pricing(), ai: aiEnabled(), recognition: recognitionEnabled() }));
 
 route('GET', '/api/me', ({ req }) => ({ account: publicAccount(authed(req)) }));
 
@@ -105,6 +106,16 @@ route('POST', '/api/stripe/webhook', ({ req, rawBody }) => webhook(rawBody, req.
 
 route('POST', '/api/ai/recommend', ({ req, body }) => recommend(withAccess(req), body));
 
+// Audio upload: only audio/wav is accepted (a cross-site form cannot send that type without CORS).
+route('POST', '/api/recognize', ({ req, rawBody }) => {
+  const u = withAccess(req);
+  if (!String(req.headers['content-type'] || '').startsWith('audio/wav')) throw new HttpError(415, 'WAV-Aufnahme erwartet.');
+  rateLimit(`recognize:${u.id}`, 30, 3600000);
+  return recognize(rawBody);
+}, { raw: true });
+route('POST', '/api/wishes', ({ req, body }) => { addWish(authed(req).id, body); return { ok: true }; });
+route('GET', '/api/admin/wishes', ({ req }) => { admin(req); return { wishes: topWishes() }; });
+
 route('GET', '/api/lyrics', ({ req, query }) => {
   const u = withAccess(req);
   rateLimit(`lyrics:${u.id}`, 120, 3600000);
@@ -130,7 +141,7 @@ const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.json': 'application/json',
   '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8',
-  '.mp3': 'audio/mpeg', '.jpg': 'image/jpeg', '.lrc': 'text/plain; charset=utf-8',
+  '.mp3': 'audio/mpeg', '.jpg': 'image/jpeg', '.lrc': 'text/plain; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
 };
 const PUBLIC_DIRS = new Set(['', 'css', 'js', 'icons', 'legal', 'catalog', 'vendor']);
 

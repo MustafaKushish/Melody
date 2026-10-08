@@ -9,6 +9,9 @@ import { viewDiscover, catalogActions, loadCatalog, statusBadge, isCatalog, play
 import { viewShared, shareActions } from './share.js';
 import { driveActions, driveForms, closeDrive, isDriveOpen } from './drive.js';
 import { partyActions, closeParty, isPartyOpen } from './party.js';
+import { fitnessActions, closeFitness, isFitnessOpen, onFitnessInput, openFitness } from './fitness.js';
+import { viewRecognize, recognizeActions, onRecognizeChange, listen as recognizeListen } from './recognize.js';
+import { openDrive } from './drive.js';
 import { DEMO } from './api.js';
 import { viewStudio, afterStudioRender, studioActions, onStudioInput, reportPreset } from './studio.js';
 import {
@@ -90,6 +93,8 @@ const NAV = [
   { id: 'radio', label: 'Radio', icon: 'radio' },
   { id: 'studio', label: 'Sound-Studio', icon: 'tune' },
   { id: 'drive', label: 'Fahrermodus', icon: 'car', action: 'drive' },
+  { id: 'fitness', label: 'Fitness', icon: 'fitness', action: 'fitness' },
+  { id: 'recognize', label: 'Song erkennen', icon: 'waves' },
   { id: 'account', label: 'Konto & Abo', icon: 'account' },
   { id: 'settings', label: 'Einstellungen', icon: 'settings' },
 ];
@@ -126,6 +131,7 @@ const VIEWS = {
   account: viewAccount,
   more: viewMore,
   discover: viewDiscover,
+  recognize: viewRecognize,
   shared: viewShared,
 };
 
@@ -137,6 +143,8 @@ function render() {
   const main = $('#main');
   main.innerHTML = fn();
   hydrateIcons(main);
+  const fab = $('#rc-fab');
+  if (fab) fab.hidden = view === 'recognize';
   const navView = { album: 'library', artist: 'library', playlist: 'playlists', premium: 'account', shared: 'playlists' }[view] || view;
   document.querySelectorAll('.nav-item').forEach((el) => el.classList.toggle('active', el.dataset.view === navView));
   afterRender(view);
@@ -150,6 +158,10 @@ function afterRender(view) {
   }
   if (view === 'settings') updateStorageInfo();
   if (view === 'account') afterAccountRender();
+  const q = state.route.query;
+  if (q.get('mode') === 'drive') { history.replaceState(null, '', '#/home'); openDrive(); }
+  if (q.get('mode') === 'fitness') { history.replaceState(null, '', '#/home'); openFitness(); }
+  if (view === 'recognize' && q.get('auto') === '1') { history.replaceState(null, '', '#/recognize'); recognizeListen(); }
   if (view === 'home' || (view === 'library' && !state.tracks.length)) fillHomeCatalog();
   if (view === 'studio') afterStudioRender();
 }
@@ -223,6 +235,7 @@ function emptyLibrary() {
 const MODES_HTML = () => `<div class="modes">
   <button class="mode drive-m" data-action="drive">${icon('car')}<b>Fahren</b><span>Karte, Navigation & Sprachsteuerung</span></button>
   <button class="mode party-m" data-action="party">${icon('party')}<b>Party</b><span>Lichtshow & DJ-Übergänge</span></button>
+  <button class="mode fit-m" data-action="fitness">${icon('fitness')}<b>Fitness</b><span>Musik im Trainings-Tempo, Timer & Coach</span></button>
   <button class="mode chill-m" data-action="chill">${icon('moon')}<b>Entspannen</b><span>Weicher Klang, endet nach 30 Min.</span></button>
 </div>`;
 
@@ -1080,7 +1093,7 @@ const ACTIONS = {
   },
 };
 
-Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions, driveActions, partyActions);
+Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions, driveActions, partyActions, fitnessActions, recognizeActions);
 const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms, ...driveForms };
 
 document.addEventListener('click', (e) => {
@@ -1120,7 +1133,7 @@ document.addEventListener('submit', async (e) => {
 
 document.addEventListener('input', (e) => {
   const el = e.target;
-  if (onLyricsInput(el) || onStudioInput(el)) return;
+  if (onLyricsInput(el) || onStudioInput(el) || onFitnessInput(el)) return;
   if (el.id === 'lib-search') {
     state.libQuery = el.value;
     rerenderKeepScroll();
@@ -1146,6 +1159,7 @@ document.addEventListener('input', (e) => {
 
 document.addEventListener('change', (e) => {
   const el = e.target;
+  if (onRecognizeChange(el)) return;
   if (el.id === 'np-seek') {
     player.seek((el.value / 1000) * (player.el.duration || 0));
     seeking = false;
@@ -1172,6 +1186,7 @@ document.addEventListener('keydown', (e) => {
     if (!$('#sheet').hidden) closeSheet();
     else if (isSingOpen()) closeSing();
     else if (isPartyOpen()) closeParty();
+    else if (isFitnessOpen()) closeFitness();
     else if (isDriveOpen()) closeDrive();
     else closeNowPlaying();
     return;
@@ -1190,6 +1205,7 @@ document.addEventListener('keydown', (e) => {
     setRangeP(vol);
     toast(`Lautstärke ${Math.round(v * 100)} %`);
   } else if (e.key.toLowerCase() === 'f' && !radio) toggleFav(player.track);
+  else if (e.key.toLowerCase() === 's') recognizeListen();
 });
 
 // Drag & drop import (desktop).
@@ -1239,6 +1255,8 @@ hooks.createPlaylist = createPlaylist;
 hooks.reportPreset = reportPreset;
 hooks.play = (ids, i) => player.playList(ids, i);
 hooks.toggleFav = toggleFav;
+hooks.sing = openSing;
+hooks.recognize = () => recognizeListen();
 hooks.closeSheet = closeSheet;
 hooks.go = go;
 window.addEventListener('online', () => { toast('Wieder online'); rerenderKeepScroll(); });

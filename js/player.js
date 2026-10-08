@@ -677,7 +677,7 @@ class Player extends EventTarget {
     this.next(true);
   }
 
-  playList(ids, start = 0) {
+  playList(ids, start = 0, startAt = 0) {
     if (!ids.length) return;
     this.queue = [...ids];
     this.original = null;
@@ -688,7 +688,7 @@ class Player extends EventTarget {
       this.queue = [first, ...shuffled(ids.filter((_, i) => i !== start))];
       idx = 0;
     }
-    return this.load(idx);
+    return this.load(idx, true, startAt);
   }
 
   playShuffled(ids) {
