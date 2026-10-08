@@ -25,6 +25,16 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 - **Effekt-Pads**: Echo-Out, Filter-Sweep, Bass-Kill, Vinyl-Stopp.
 - Equalizer mit 10 Bändern und 12 weiteren Presets.
 
+### ⬇️ Herunterladen & offline hören
+- **Entdecken**: Songs aus dem Melody-Katalog streamen (mit Spulen) oder **herunterladen**, einzeln, als ganze Playlist oder alles auf einmal.
+- Heruntergeladene Songs laufen **ohne Internet**. Der Tab „Offline“ in der Bibliothek zeigt alles, was offline verfügbar ist, samt Speicherbedarf.
+- Ohne Verbindung werden nicht geladene Songs ausgegraut und übersprungen.
+- Der Demo-Katalog (`catalog/`) enthält 6 eigens komponierte Songs mit Lyrics. Für einen echten Katalog lizenzfreie Quellen wie Jamendo/Audius anbinden oder eigene Künstler unter Vertrag nehmen.
+
+### 🔗 Playlists teilen
+- Ein Link enthält die ganze Playlist, ohne Server. Teilen per WhatsApp, Telegram, E-Mail, Kopieren oder über den Teilen-Dialog des Handys.
+- Der Empfänger sieht „Geteilte Playlist von …“, kann sie abspielen und in seine Playlists übernehmen. Katalog-Songs laufen sofort, eigene Dateien werden in seiner Bibliothek gesucht.
+
 ### 💳 Konto, Abo & Gutscheine
 - Konto mit 7 Tagen kostenloser Testphase, ohne Zahlungsdaten.
 - **Monatsabo 4,99 €** oder **Jahresabo 49,99 €** (entspricht 4,17 €/Monat, 2 Monate geschenkt).
@@ -75,7 +85,10 @@ Danach `http://localhost:8080` öffnen.
 
 Ohne Stripe-Schlüssel läuft ein **Testmodus**: Abos und Gutscheine lassen sich ausprobieren, es wird nichts abgebucht. Ohne Anthropic-Schlüssel nutzt „Für dich“ die eingebaute Empfehlungs-Engine.
 
-Tests: `npm test` (17 Tests für Konten, Abos, Gutscheine, Stripe-Webhooks, KI-Anfrage und Sicherheit).
+Tests: `npm test` (18 Tests für Konten, Abos, Gutscheine, Stripe-Webhooks, KI-Anfrage und Sicherheit).
+
+### Demo ohne Server
+`tools/build-demo.sh` baut eine Version, bei der Konten und Zahlungen im Browser simuliert werden. Sie eignet sich zum Vorführen und lässt sich auf jedem statischen Hosting (z. B. GitHub Pages) betreiben.
 
 ## 🌍 Online stellen
 

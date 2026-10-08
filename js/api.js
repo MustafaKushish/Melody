@@ -6,7 +6,13 @@ export class ApiError extends Error {
 }
 
 // Calls the Melody server (same origin). status 0 = offline / server unreachable.
+export const DEMO = document.documentElement.dataset.demo === '1';
+
 export async function api(path, { method = 'GET', body } = {}) {
+  if (DEMO) {
+    const { demoApi } = await import('./demo-api.js');
+    return demoApi(path, method, body);
+  }
   let res;
   try {
     res = await fetch('api' + path, {

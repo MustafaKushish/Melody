@@ -652,3 +652,26 @@ a { color: var(--accent); }
   .sound small { min-height: 0; font-size: 12px; }
   .mini-eq { height: 24px; }
 }
+
+/* Downloads, catalog, sharing */
+.dl-slot { display: inline-flex; vertical-align: middle; margin-right: 4px; }
+.dl-badge { display: inline-flex; align-items: center; color: var(--text-3); font-size: 11px; font-weight: 700; }
+.dl-badge .ico { width: 16px; height: 16px; }
+.dl-badge.ok { color: #22c55e; }
+.dl-badge.busy { color: var(--accent); }
+.track.unavailable { opacity: .4; }
+.offline-note { display: flex; align-items: center; gap: 6px; }
+.offline-note .ico { width: 18px; height: 18px; color: #22c55e; }
+.discover-hero {
+  border-radius: 22px; padding: clamp(20px, 4vw, 34px); align-items: center;
+  background: radial-gradient(circle at 85% 20%, color-mix(in srgb, var(--accent-2) 35%, transparent), transparent 55%),
+              radial-gradient(circle at 10% 90%, color-mix(in srgb, var(--accent) 40%, transparent), transparent 55%), var(--surface);
+  border: 1px solid var(--border);
+}
+.discover-hero .sub { margin: 6px 0 0; }
+.share-sheet { padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.share-sheet h3 { margin: 6px 0 0; }
+.share-link { display: flex; gap: 8px; width: 100%; }
+.share-link .input { font-size: 13px; }
+.share-targets { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.share-targets a.chip { text-decoration: none; }

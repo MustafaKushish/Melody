@@ -5,6 +5,9 @@ import { icon, hydrateIcons, setIcon } from './icons.js';
 import { ensureAccess, renderAccountChip, viewPremium, viewAccount, afterAccountRender, accountActions, accountForms } from './account.js';
 import { lyricsActions, lyricsForms, onLyricsInput, onTrackChange, updateSingState, onNowPlayingOpen, closeSing, isSingOpen, attachLrcFiles, editLyricsSheet, openSing } from './lyrics.js';
 import { viewForYou, forYouActions, forYouForms, MOODS } from './foryou.js';
+import { viewDiscover, catalogActions, loadCatalog, statusBadge, isCatalog, playable, download, removeDownload, downloadedBytes, mb, catalogCards } from './catalog.js';
+import { viewShared, shareActions } from './share.js';
+import { DEMO } from './api.js';
 import { viewStudio, afterStudioRender, studioActions, onStudioInput, reportPreset } from './studio.js';
 import {
   $, esc, fmt, fmtLong, hue, plural, byText, toast, state, hooks, getTrack, go,
@@ -78,10 +81,11 @@ const MIXES = [
 // ---------- Navigation ----------
 const NAV = [
   { id: 'home', label: 'Start', icon: 'home', mobile: true },
+  { id: 'discover', label: 'Entdecken', icon: 'explore', mobile: true },
   { id: 'foryou', label: 'Für dich', icon: 'sparkle', mobile: true },
   { id: 'library', label: 'Bibliothek', icon: 'library', mobile: true },
   { id: 'playlists', label: 'Playlists', icon: 'playlist' },
-  { id: 'radio', label: 'Radio', icon: 'radio', mobile: true },
+  { id: 'radio', label: 'Radio', icon: 'radio' },
   { id: 'studio', label: 'Sound-Studio', icon: 'tune' },
   { id: 'account', label: 'Konto & Abo', icon: 'account' },
   { id: 'settings', label: 'Einstellungen', icon: 'settings' },
@@ -118,6 +122,8 @@ const VIEWS = {
   premium: viewPremium,
   account: viewAccount,
   more: viewMore,
+  discover: viewDiscover,
+  shared: viewShared,
 };
 
 function render() {
@@ -128,7 +134,7 @@ function render() {
   const main = $('#main');
   main.innerHTML = fn();
   hydrateIcons(main);
-  const navView = { album: 'library', artist: 'library', playlist: 'playlists', premium: 'account' }[view] || view;
+  const navView = { album: 'library', artist: 'library', playlist: 'playlists', premium: 'account', shared: 'playlists' }[view] || view;
   document.querySelectorAll('.nav-item').forEach((el) => el.classList.toggle('active', el.dataset.view === navView));
   afterRender(view);
 }
@@ -141,6 +147,7 @@ function afterRender(view) {
   }
   if (view === 'settings') updateStorageInfo();
   if (view === 'account') afterAccountRender();
+  if (view === 'home' || (view === 'library' && !state.tracks.length)) fillHomeCatalog();
   if (view === 'studio') afterStudioRender();
 }
 
@@ -156,14 +163,14 @@ function trackRows(tracks, opts = {}) {
   const key = registerList(tracks.map((t) => t.id));
   const cur = player.mode === 'library' ? player.currentId : null;
   return `<div class="tracks">${tracks.map((t, i) => `
-    <div class="track${t.id === cur ? ' current' : ''}" data-action="play-in" data-list="${key}" data-index="${i}" data-id="${t.id}">
+    <div class="track${t.id === cur ? ' current' : ''}${playable(t) ? '' : ' unavailable'}" data-action="play-in" data-list="${key}" data-index="${i}" data-id="${t.id}">
       <span class="num">${opts.trackNo ? t.trackNo || i + 1 : i + 1}</span>
       ${coverHTML(t, 'sm')}
       <div class="meta">
         <div class="t">${esc(t.title)}</div>
         <div class="a">${t.favorite ? `<span class="heart">♥</span> ` : ''}${esc(t.artist)}${opts.noAlbum ? '' : ' · ' + esc(t.album)}</div>
       </div>
-      <span class="dur">${fmt(t.duration)}</span>
+      <span class="dur"><span class="dl-slot">${statusBadge(t)}</span> ${fmt(t.duration)}</span>
       <button class="icon-btn" data-action="track-menu" data-id="${t.id}" data-pl="${esc(opts.playlistId || '')}" data-index="${i}" aria-label="Optionen">${icon('more')}</button>
     </div>`).join('')}</div>`;
 }
@@ -209,6 +216,14 @@ function emptyLibrary() {
 }
 
 // ---------- Views ----------
+async function fillHomeCatalog() {
+  const list = await loadCatalog();
+  const el = $('#home-catalog');
+  if (!el || !list.length) return;
+  el.innerHTML = `<h2>Neu im Melody-Katalog <button class="chip" data-action="nav" data-view="discover">Alle anzeigen</button></h2>${catalogCards(list, 'all')}`;
+  hydrateIcons(el);
+}
+
 function viewHome() {
   if (!state.tracks.length) {
     return `<section class="welcome">
@@ -217,11 +232,14 @@ function viewHome() {
       <div class="row">
         <button class="btn btn-primary" data-action="import">${icon('upload')}Musik importieren</button>
         <button class="btn hide-sm" data-action="import-folder">${icon('folder')}Ordner importieren</button>
-        <button class="btn" data-action="nav" data-view="radio">${icon('radio')}Radio hören</button>
+        <button class="btn" data-action="nav" data-view="discover">${icon('explore')}Songs entdecken</button>
       </div>
+      ${DEMO ? '<p class="demo-note" style="margin-top:16px">Demo-Version: Tippe auf „Songs entdecken“ und spiele die Melody-Songs ab – mit Lyrics zum Mitsingen. Du kannst auch eigene Musikdateien importieren.</p>' : ''}
+      <div id="home-catalog"></div>
       <div class="features">
         <div class="feature">${icon('heartOutline')}<b>100 % werbefrei</b><span>Keine Werbung, kein Tracking, keine Datenweitergabe.</span></div>
-        <div class="feature">${icon('download')}<b>Offline zuerst</b><span>Deine Musik liegt auf deinem Gerät – kein Internet nötig.</span></div>
+        <div class="feature">${icon('download')}<b>Herunterladen & offline</b><span>Songs laden und überall ohne Internet hören.</span></div>
+        <div class="feature">${icon('share')}<b>Playlists teilen</b><span>Per Link an Freunde – WhatsApp, Telegram, E-Mail.</span></div>
         <div class="feature">${icon('eq')}<b>10-Band-Equalizer</b><span>12 Presets oder dein eigener Sound.</span></div>
         <div class="feature">${icon('sparkle')}<b>Smart-Mixe</b><span>Top-Hits, Wiederentdecken, Schnelle Runde & mehr.</span></div>
         <div class="feature">${icon('radio')}<b>30.000+ Radiosender</b><span>Weltweit live, kostenlos.</span></div>
@@ -250,6 +268,7 @@ function viewHome() {
         <p>Melody kennt deinen Geschmack und stellt dir in Sekunden den passenden Mix zusammen.</p></div>
       <div class="tabs">${Object.entries(MOODS).slice(0, 6).map(([name, m]) => `<button class="chip" data-action="ai-mood" data-mood="${name}">${m.emoji} ${name}</button>`).join('')}</div>
     </section>
+    <div id="home-catalog"></div>
     <h2>Smart-Mixe</h2>
     <div class="grid">${MIXES.map((m) => {
       const n = m.ids().length;
@@ -298,14 +317,20 @@ function libraryList() {
   }
   let list = state.tracks.filter((t) => matches(t, q));
   if (tab === 'favs') list = list.filter((t) => t.favorite);
+  if (tab === 'offline') {
+    list = list.filter((t) => !isCatalog(t) || t.downloaded);
+    const dl = downloadedBytes();
+    return `<p class="muted small offline-note">${icon('downloadDone')} ${plural(list.length, 'Titel', 'Titel')} ohne Internet hörbar · eigene Dateien sind immer offline${dl ? ` · Downloads: ${mb(dl)}` : ''}</p>` +
+      trackRows(sortedTracks(list), { empty: 'Noch nichts offline. Lade Songs unter „Entdecken“ herunter.' });
+  }
   return trackRows(sortedTracks(list), { empty: tab === 'favs' ? 'Noch keine Lieblingssongs – tippe auf ♡ beim Abspielen.' : 'Nichts gefunden' });
 }
 
 function viewLibrary() {
-  if (!state.tracks.length) return `<h1>Bibliothek</h1>${emptyLibrary()}`;
+  if (!state.tracks.length) return `<h1>Bibliothek</h1>${emptyLibrary()}<p class="center"><button class="btn" data-action="nav" data-view="discover">${icon('explore')}Oder Songs im Katalog entdecken</button></p>`;
   const tab = state.route.param || 'songs';
-  const tabs = [['songs', 'Titel'], ['albums', 'Alben'], ['artists', 'Künstler'], ['favs', 'Lieblingssongs']];
-  const showSort = tab === 'songs' || tab === 'favs';
+  const tabs = [['songs', 'Titel'], ['albums', 'Alben'], ['artists', 'Künstler'], ['favs', 'Lieblingssongs'], ['offline', 'Offline']];
+  const showSort = tab === 'songs' || tab === 'favs' || tab === 'offline';
   return `
     <div class="row" style="margin-bottom:14px"><h1 style="margin:0">Bibliothek</h1><span class="spacer"></span>
       <button class="btn" data-action="import">${icon('add')}<span class="hide-sm">Hinzufügen</span></button></div>
@@ -371,7 +396,7 @@ function viewPlaylist() {
     <div class="hero">${groupCover(tracks, 'lg', p.name, 'playlist')}
       <div><div class="kind">Playlist</div><h1>${esc(p.name)}</h1>
       <div class="muted">${plural(tracks.length, 'Titel', 'Titel')} · ${fmtLong(total)}</div>
-      ${tracks.length ? heroActions('l0', `<button class="icon-btn" data-action="playlist-menu" data-id="${esc(p.id)}" aria-label="Playlist-Optionen">${icon('more')}</button>`)
+      ${tracks.length ? heroActions('l0', `<button class="btn" data-action="share-playlist" data-id="${esc(p.id)}">${icon('share')}Teilen</button><button class="icon-btn" data-action="playlist-menu" data-id="${esc(p.id)}" aria-label="Playlist-Optionen">${icon('more')}</button>`)
         : `<div class="hero-actions"><button class="icon-btn" data-action="playlist-menu" data-id="${esc(p.id)}" aria-label="Playlist-Optionen">${icon('more')}</button></div>`}
       </div></div>${rows}`;
 }
@@ -541,13 +566,14 @@ function trackMenu(id, playlistId, index) {
     ${item('m-queue', 'queue', 'Zur Warteschlange hinzufügen')}
     ${item('m-sing', 'mic', 'Mitsingen')}
     ${item('m-add-pl', 'add', 'Zu Playlist hinzufügen')}
+    ${isCatalog(t) ? item('dl-track', t.downloaded ? 'delete' : 'download', t.downloaded ? 'Download entfernen' : 'Herunterladen (offline hören)') : ''}
     ${item('m-fav', t.favorite ? 'heart' : 'heartOutline', t.favorite ? 'Aus Lieblingssongs entfernen' : 'Zu Lieblingssongs', t.favorite ? 'on' : '')}
     ${item('m-album', 'album', 'Zum Album')}
     ${item('m-artist', 'person', 'Zum Künstler')}
     ${item('m-edit', 'edit', 'Infos bearbeiten')}
     ${item('m-lyrics', 'lyrics', 'Lyrics bearbeiten')}
     ${playlistId ? item('m-remove-pl', 'close', 'Aus dieser Playlist entfernen') : ''}
-    ${item('m-delete', 'delete', 'Vom Gerät löschen', 'danger')}`);
+    ${item('m-delete', 'delete', isCatalog(t) ? 'Aus Bibliothek entfernen' : 'Vom Gerät löschen', 'danger')}`);
 }
 
 function addToPlaylistSheet(ids) {
@@ -852,6 +878,7 @@ function listFromVisible() {
   const q = state.libQuery.trim().toLowerCase();
   let list = state.tracks.filter((t) => matches(t, q));
   if (tab === 'favs') list = list.filter((t) => t.favorite);
+  if (tab === 'offline') list = list.filter((t) => !isCatalog(t) || t.downloaded);
   return sortedTracks(list).map((t) => t.id);
 }
 
@@ -862,7 +889,11 @@ const ACTIONS = {
   'import-folder': () => $('#folder-input').click(),
   'play-in': (el) => {
     const ids = state.lists[el.dataset.list];
-    if (ids) player.playList(ids, +el.dataset.index || 0);
+    if (!ids) return;
+    const start = ids[+el.dataset.index || 0];
+    if (!playable(getTrack(start))) { toast('Offline – dieser Titel ist nicht heruntergeladen.'); return; }
+    const ok = ids.filter((id) => playable(getTrack(id)));
+    player.playList(ok, Math.max(0, ok.indexOf(start)));
   },
   'shuffle-list': (el) => {
     const ids = state.lists[el.dataset.list];
@@ -959,9 +990,18 @@ const ACTIONS = {
   'playlist-menu': (el) => {
     state.menu = { playlistId: el.dataset.id };
     openSheet(`<h3>Playlist</h3>
+      <button class="sheet-item" data-action="share-playlist">${icon('share')}Playlist teilen</button>
+      <button class="sheet-item" data-action="pl-download">${icon('download')}Playlist herunterladen</button>
       <button class="sheet-item" data-action="pl-queue">${icon('queue')}Zur Warteschlange hinzufügen</button>
       <button class="sheet-item" data-action="pl-rename">${icon('edit')}Umbenennen</button>
       <button class="sheet-item danger" data-action="pl-delete">${icon('delete')}Playlist löschen</button>`);
+  },
+  'pl-download': () => {
+    const p = state.playlists.find((x) => x.id === state.menu.playlistId);
+    closeSheet();
+    const tracks = (p?.trackIds || []).map(getTrack).filter(Boolean);
+    if (!tracks.some(isCatalog)) { toast('Alle Titel sind bereits auf deinem Gerät.'); return; }
+    download(tracks);
   },
   'pl-queue': () => {
     const p = state.playlists.find((x) => x.id === state.menu.playlistId);
@@ -1028,7 +1068,7 @@ const ACTIONS = {
   },
 };
 
-Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions);
+Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions);
 const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms };
 
 document.addEventListener('click', (e) => {
@@ -1183,6 +1223,11 @@ hooks.trackRows = trackRows;
 hooks.registerList = registerList;
 hooks.createPlaylist = createPlaylist;
 hooks.reportPreset = reportPreset;
+hooks.play = (ids, i) => player.playList(ids, i);
+hooks.closeSheet = closeSheet;
+hooks.go = go;
+window.addEventListener('online', () => { toast('Wieder online'); rerenderKeepScroll(); });
+window.addEventListener('offline', () => { toast('Offline – heruntergeladene Musik läuft weiter'); rerenderKeepScroll(); });
 
 async function boot() {
   applyTheme();

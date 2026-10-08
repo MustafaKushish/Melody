@@ -135,3 +135,16 @@ test('Rate-Limit bei Registrierung greift', async () => {
   for (let i = 0; i < 11; i++) last = await api('/auth/register', { method: 'POST', body: { ...user, email: `spam${i}@example.com` } });
   assert.equal(last.status, 429);
 });
+
+test('Katalog: Songs streamen mit Range-Anfragen (zum Spulen)', async () => {
+  const cat = await (await fetch(base + '/catalog/catalog.json')).json();
+  assert.ok(cat.tracks.length >= 5);
+  const url = base + '/catalog/' + cat.tracks[0].audio;
+  const full = await fetch(url);
+  assert.equal(full.status, 200);
+  assert.equal(full.headers.get('content-type'), 'audio/mpeg');
+  const part = await fetch(url, { headers: { Range: 'bytes=100-199' } });
+  assert.equal(part.status, 206);
+  assert.equal((await part.arrayBuffer()).byteLength, 100);
+  assert.match(part.headers.get('content-range'), /^bytes 100-199\/\d+$/);
+});

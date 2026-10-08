@@ -499,13 +499,25 @@ class Player extends EventTarget {
     }, 50);
   }
 
+  // Downloaded/imported audio plays from the device; catalog songs that aren't downloaded are streamed.
   async loadInto(k, id) {
     const blob = await db.get('files', id);
-    if (!blob) return false;
+    const t = this.lookup(id);
     if (this.urls[k]) URL.revokeObjectURL(this.urls[k]);
-    this.urls[k] = URL.createObjectURL(blob);
+    this.urls[k] = null;
     const deck = this.decks[k];
-    deck.src = this.urls[k];
+    if (blob) {
+      this.urls[k] = URL.createObjectURL(blob);
+      deck.src = this.urls[k];
+    } else if (t?.url) {
+      if (!navigator.onLine) {
+        this.emit('error', `„${t.title}“ ist nicht heruntergeladen – offline nicht verfügbar.`);
+        return false;
+      }
+      deck.src = t.url;
+    } else {
+      return false;
+    }
     deck.defaultPlaybackRate = deck.playbackRate = this.settings.rate;
     deck.preservesPitch = deck.webkitPreservesPitch = this.settings.dj.keepPitch;
     return true;
@@ -522,7 +534,7 @@ class Player extends EventTarget {
     const ok = t && (await this.loadInto(this.d, id));
     if (token !== this.loadToken) return;
     if (!ok) {
-      this.emit('error', 'Titel nicht gefunden.');
+      if (!(t?.url && !navigator.onLine)) this.emit('error', 'Titel nicht gefunden.');
       return;
     }
     this.track = t;

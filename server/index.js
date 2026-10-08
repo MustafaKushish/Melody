@@ -110,8 +110,9 @@ const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.json': 'application/json',
   '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8',
+  '.mp3': 'audio/mpeg', '.jpg': 'image/jpeg', '.lrc': 'text/plain; charset=utf-8',
 };
-const PUBLIC_DIRS = new Set(['', 'css', 'js', 'icons', 'legal']);
+const PUBLIC_DIRS = new Set(['', 'css', 'js', 'icons', 'legal', 'catalog']);
 
 function serveStatic(req, res, pathname) {
   let rel = decodeURIComponent(pathname).replace(/^\/+/, '') || 'index.html';
@@ -122,10 +123,27 @@ function serveStatic(req, res, pathname) {
       path.basename(file).startsWith('.') || /README|package/i.test(path.basename(file))) {
     return send(res, 404, 'Nicht gefunden', 'text/plain; charset=utf-8');
   }
-  fs.readFile(file, (err, data) => {
-    if (err) return send(res, 404, 'Nicht gefunden', 'text/plain; charset=utf-8');
-    res.setHeader('Cache-Control', ext === '.html' || rel === 'sw.js' ? 'no-cache' : 'public, max-age=3600');
-    send(res, 200, data, TYPES[ext]);
+  fs.stat(file, (err, st) => {
+    if (err || !st.isFile()) return send(res, 404, 'Nicht gefunden', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', ext === '.html' || rel === 'sw.js' || rel.endsWith('.json') ? 'no-cache' : 'public, max-age=3600');
+    res.setHeader('Accept-Ranges', 'bytes');
+    // Range requests let the player seek inside streamed songs.
+    const m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+    if (m && (m[1] || m[2])) {
+      let start = m[1] ? Number(m[1]) : st.size - Number(m[2]);
+      let end = m[1] && m[2] ? Number(m[2]) : st.size - 1;
+      if (start < 0) start = 0;
+      end = Math.min(end, st.size - 1);
+      if (start > end) {
+        res.writeHead(416, { 'Content-Range': `bytes */${st.size}` });
+        return res.end();
+      }
+      res.writeHead(206, { 'Content-Type': TYPES[ext], 'Content-Length': end - start + 1, 'Content-Range': `bytes ${start}-${end}/${st.size}` });
+      return fs.createReadStream(file, { start, end }).pipe(res);
+    }
+    res.writeHead(200, { 'Content-Type': TYPES[ext], 'Content-Length': st.size });
+    if (req.method === 'HEAD') return res.end();
+    fs.createReadStream(file).pipe(res);
   });
 }
 

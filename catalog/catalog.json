@@ -1,0 +1,84 @@
+{
+ "version": 1,
+ "note": "Demo-Songs, komponiert für Melody (frei verwendbar).",
+ "tracks": [
+  {
+   "id": "sonnenaufgang",
+   "title": "Sonnenaufgang",
+   "artist": "Lina Morgen",
+   "album": "Neuer Tag",
+   "genre": "Pop",
+   "year": "2026",
+   "duration": 55.83,
+   "audio": "sonnenaufgang.mp3",
+   "cover": "sonnenaufgang.jpg",
+   "lyrics": "sonnenaufgang.lrc",
+   "size": 782857
+  },
+  {
+   "id": "nachtfahrt",
+   "title": "Nachtfahrt",
+   "artist": "Neon Boulevard",
+   "album": "Lichter der Stadt",
+   "genre": "Electronic",
+   "year": "2026",
+   "duration": 48.95,
+   "audio": "nachtfahrt.mp3",
+   "cover": "nachtfahrt.jpg",
+   "lyrics": "nachtfahrt.lrc",
+   "size": 686608
+  },
+  {
+   "id": "regentropfen",
+   "title": "Regentropfen",
+   "artist": "Kaffee & Vinyl",
+   "album": "Sonntags",
+   "genre": "Lofi",
+   "year": "2025",
+   "duration": 72.74,
+   "audio": "regentropfen.mp3",
+   "cover": "regentropfen.jpg",
+   "lyrics": "regentropfen.lrc",
+   "size": 1019739
+  },
+  {
+   "id": "sommerwind",
+   "title": "Sommerwind",
+   "artist": "Die Wellen",
+   "album": "Strandtage",
+   "genre": "Pop",
+   "year": "2026",
+   "duration": 60.1,
+   "audio": "sommerwind.mp3",
+   "cover": "sommerwind.jpg",
+   "lyrics": "sommerwind.lrc",
+   "size": 842830
+  },
+  {
+   "id": "energie",
+   "title": "Energie",
+   "artist": "Puls 128",
+   "album": "Volle Kraft",
+   "genre": "Dance",
+   "year": "2026",
+   "duration": 47.5,
+   "audio": "energie.mp3",
+   "cover": "energie.jpg",
+   "lyrics": "energie.lrc",
+   "size": 666428
+  },
+  {
+   "id": "gipfelglueck",
+   "title": "Gipfelglück",
+   "artist": "Lina Morgen",
+   "album": "Neuer Tag",
+   "genre": "Rock",
+   "year": "2026",
+   "duration": 44.24,
+   "audio": "gipfelglueck.mp3",
+   "cover": "gipfelglueck.jpg",
+   "lyrics": "gipfelglueck.lrc",
+   "size": 620582
+  }
+ ]
+}
