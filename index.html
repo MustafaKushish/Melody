@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Melody</title>
+  <meta name="description" content="Melody – deine Musik, werbefrei, auf allen Geräten.">
+  <meta name="theme-color" content="#0f0f14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Melody">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><img src="icons/icon.svg" alt=""><span>Melody</span></div>
+      <nav class="side-nav" id="side-nav"></nav>
+      <div class="side-foot">
+        <button class="btn btn-primary block" data-action="import"><span data-icon="upload"></span>Musik importieren</button>
+      </div>
+    </aside>
+    <main id="main" tabindex="-1"></main>
+  </div>
+
+  <footer id="player-bar" class="player-bar" hidden>
+    <div class="pb-progress"><div class="pb-progress-fill" id="pb-fill"></div></div>
+    <div class="pb-left" data-action="open-np">
+      <div class="cover sm" id="pb-cover"></div>
+      <div class="meta">
+        <div class="t" id="pb-title"></div>
+        <div class="a" id="pb-artist"></div>
+      </div>
+    </div>
+    <div class="pb-center">
+      <button class="icon-btn hide-sm" data-action="shuffle" id="pb-shuffle" aria-label="Zufallswiedergabe" data-icon="shuffle"></button>
+      <button class="icon-btn hide-sm" data-action="prev" aria-label="Zurück" data-icon="prev"></button>
+      <button class="icon-btn play" data-action="toggle" id="pb-play" aria-label="Abspielen" data-icon="play"></button>
+      <button class="icon-btn" data-action="next" aria-label="Weiter" data-icon="next"></button>
+      <button class="icon-btn hide-sm" data-action="repeat" id="pb-repeat" aria-label="Wiederholen" data-icon="repeat"></button>
+    </div>
+    <div class="pb-right hide-sm">
+      <span class="time" id="pb-time">0:00 / 0:00</span>
+      <button class="icon-btn" data-action="queue" aria-label="Warteschlange" data-icon="queue"></button>
+      <span data-icon="volume" class="vol-ico"></span>
+      <input type="range" id="pb-volume" min="0" max="1" step="0.01" aria-label="Lautstärke">
+    </div>
+  </footer>
+
+  <nav class="bottom-nav" id="bottom-nav"></nav>
+
+  <section id="now-playing" class="now-playing" hidden aria-label="Aktuelle Wiedergabe">
+    <div class="np-bg" id="np-bg"></div>
+    <header class="np-head">
+      <button class="icon-btn" data-action="close-np" aria-label="Schließen" data-icon="down"></button>
+      <span class="np-context" id="np-context">Wird gespielt</span>
+      <button class="icon-btn" data-action="np-menu" aria-label="Mehr" data-icon="more"></button>
+    </header>
+    <div class="np-art">
+      <div class="cover xl" id="np-cover"></div>
+      <canvas id="np-viz" width="600" height="160"></canvas>
+    </div>
+    <div class="np-info">
+      <div class="meta">
+        <div class="t" id="np-title"></div>
+        <div class="a" id="np-artist"></div>
+      </div>
+      <button class="icon-btn" data-action="fav-current" id="np-fav" aria-label="Favorit" data-icon="heartOutline"></button>
+    </div>
+    <div class="np-seek">
+      <input type="range" id="np-seek" min="0" max="1000" value="0" aria-label="Position">
+      <div class="np-times"><span id="np-cur">0:00</span><span id="np-dur">0:00</span></div>
+    </div>
+    <div class="np-controls">
+      <button class="icon-btn" data-action="shuffle" id="np-shuffle" aria-label="Zufallswiedergabe" data-icon="shuffle"></button>
+      <button class="icon-btn lg" data-action="prev" aria-label="Zurück" data-icon="prev"></button>
+      <button class="icon-btn play xl" data-action="toggle" id="np-play" aria-label="Abspielen" data-icon="play"></button>
+      <button class="icon-btn lg" data-action="next" aria-label="Weiter" data-icon="next"></button>
+      <button class="icon-btn" data-action="repeat" id="np-repeat" aria-label="Wiederholen" data-icon="repeat"></button>
+    </div>
+    <div class="np-extra">
+      <button class="chip" data-action="speed-menu"><span data-icon="speed"></span><span id="np-speed">1×</span></button>
+      <button class="chip" data-action="sleep-menu"><span data-icon="timer"></span><span id="np-sleep">Sleep</span></button>
+      <button class="chip" data-action="goto-eq"><span data-icon="eq"></span>EQ</button>
+      <button class="chip" data-action="queue"><span data-icon="queue"></span>Als Nächstes</button>
+    </div>
+  </section>
+
+  <div id="sheet-backdrop" class="sheet-backdrop" hidden data-action="close-sheet"></div>
+  <div id="sheet" class="sheet" hidden role="dialog" aria-modal="true"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="drop-hint" class="drop-hint" hidden>Dateien loslassen, um sie zu importieren</div>
+
+  <input type="file" id="file-input" multiple accept="audio/*,.mp3,.m4a,.aac,.flac,.ogg,.opus,.wav,.webm" hidden>
+  <input type="file" id="folder-input" webkitdirectory multiple hidden>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
