@@ -782,6 +782,18 @@ class Player extends EventTarget {
     this.updatePosition();
   }
 
+  // Lowers the music while the navigation voice speaks (or voice control listens).
+  duck(on) {
+    const f = on ? 0.25 : 1;
+    this.ducked = on;
+    if (this.ctx) {
+      this.ramp(this.n.master.gain, f, 0.15);
+    } else {
+      for (const deck of this.decks) deck.volume = this.settings.volume * f;
+    }
+    this.radioEl.volume = this.settings.volume * f;
+  }
+
   setVolume(v) {
     this.settings.volume = v;
     for (const deck of this.decks) deck.volume = v;

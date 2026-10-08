@@ -70,6 +70,18 @@ db.exec(`
   );
 `);
 
+// Additive migrations for existing databases.
+const userCols = new Set(db.prepare('PRAGMA table_info(users)').all().map((c) => c.name));
+for (const [col, def] of [
+  ['student_status', "TEXT NOT NULL DEFAULT 'none'"],
+  ['student_type', 'TEXT'],
+  ['student_school', 'TEXT'],
+  ['student_valid_until', 'INTEGER NOT NULL DEFAULT 0'],
+  ['student_requested_at', 'INTEGER'],
+]) {
+  if (!userCols.has(col)) db.exec(`ALTER TABLE users ADD COLUMN ${col} ${def}`);
+}
+
 export const now = () => Date.now();
 
 export function tx(fn) {

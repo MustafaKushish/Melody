@@ -5,12 +5,13 @@ import { fileURLToPath } from 'node:url';
 import { db, now } from './db.js';
 import {
   HttpError, register, login, createSession, sessionCookie, userFromRequest, destroySession,
-  publicAccount, deleteAccount, verifyPassword, rateLimit, getUser,
+  publicAccount, deleteAccount, verifyPassword, rateLimit, getUser, applyStudent, decideStudent, pendingStudents,
 } from './auth.js';
 import { pricing, checkout, portal, demoCancel, redeemVoucher, myVouchers, voucherForSession, webhook } from './billing.js';
 import { recommend, aiEnabled, MELODY_PRESETS } from './ai.js';
 import { findLyrics } from './lyrics.js';
-import { PORT, PUBLIC_URL, DEMO_PAYMENTS, TRUST_PROXY } from './config.js';
+import { PORT, PUBLIC_URL, DEMO_PAYMENTS, TRUST_PROXY, STUDENT_AUTO_APPROVE, ADMIN_TOKEN } from './config.js';
+import crypto from 'node:crypto';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SECURE = PUBLIC_URL.startsWith('https://');
@@ -67,6 +68,25 @@ route('POST', '/api/account/delete', ({ req, body, res }) => {
   return { ok: true };
 });
 
+route('POST', '/api/student/apply', ({ req, body }) => {
+  const u = authed(req);
+  rateLimit(`student:${u.id}`, 5, 86400000);
+  applyStudent(u, body, STUDENT_AUTO_APPROVE);
+  return { account: publicAccount(getUser(u.id)) };
+});
+
+const admin = (req) => {
+  const token = String(req.headers.authorization || '').replace(/^Bearer /, '');
+  const ok = ADMIN_TOKEN && token.length === ADMIN_TOKEN.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(ADMIN_TOKEN));
+  if (!ok) throw new HttpError(401, 'Nicht berechtigt.');
+};
+route('GET', '/api/admin/students', ({ req }) => { admin(req); return { pending: pendingStudents() }; });
+route('POST', '/api/admin/students/decide', ({ req, body }) => {
+  admin(req);
+  decideStudent(Number(body.userId), !!body.approve);
+  return { ok: true };
+});
+
 route('POST', '/api/billing/checkout', ({ req, body }) => checkout(authed(req), body));
 route('POST', '/api/billing/portal', ({ req }) => portal(authed(req)));
 route('POST', '/api/billing/cancel-demo', ({ req }) => { demoCancel(authed(req)); return { ok: true }; });
@@ -112,7 +132,7 @@ const TYPES = {
   '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8',
   '.mp3': 'audio/mpeg', '.jpg': 'image/jpeg', '.lrc': 'text/plain; charset=utf-8',
 };
-const PUBLIC_DIRS = new Set(['', 'css', 'js', 'icons', 'legal', 'catalog']);
+const PUBLIC_DIRS = new Set(['', 'css', 'js', 'icons', 'legal', 'catalog', 'vendor']);
 
 function serveStatic(req, res, pathname) {
   let rel = decodeURIComponent(pathname).replace(/^\/+/, '') || 'index.html';

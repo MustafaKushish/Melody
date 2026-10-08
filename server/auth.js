@@ -107,7 +107,45 @@ export function publicAccount(u) {
     premiumUntil: u.premium_until,
     plan: u.plan && PLANS[u.plan] ? { id: u.plan, name: PLANS[u.plan].name } : null,
     subscription: u.stripe_sub ? { status: u.sub_status, cancelAtPeriodEnd: !!u.cancel_at_period_end } : null,
+    student: {
+      status: u.student_status === 'approved' && u.student_valid_until < t ? 'expired' : u.student_status,
+      type: u.student_type,
+      school: u.student_school,
+      validUntil: u.student_valid_until,
+    },
   };
+}
+
+export const isStudentVerified = (u) => u.student_status === 'approved' && u.student_valid_until > now();
+
+const STUDENT_TYPES = { schule: 'Schule', ausbildung: 'Ausbildung', studium: 'Studium' };
+
+export function applyStudent(u, body, autoApprove) {
+  const type = STUDENT_TYPES[body.type] ? body.type : null;
+  const school = String(body.school || '').trim().slice(0, 120);
+  if (!type) throw new HttpError(400, 'Bitte wähle Schule, Ausbildung oder Studium.');
+  if (school.length < 3) throw new HttpError(400, 'Bitte gib den Namen deiner Schule, Uni oder deines Ausbildungsbetriebs an.');
+  if (!body.confirm) throw new HttpError(400, 'Bitte bestätige, dass deine Angaben stimmen.');
+  if (!body.guardian) throw new HttpError(400, 'Bitte bestätige: mindestens 16 Jahre oder Einverständnis der Eltern.');
+  const m = String(body.validUntil || '').match(/^(\d{4})-(\d{2})$/);
+  const max = new Date(); max.setFullYear(max.getFullYear() + 1);
+  let until = m ? new Date(Number(m[1]), Number(m[2]), 0, 23, 59).getTime() : max.getTime();
+  if (until < now()) throw new HttpError(400, 'Das Datum liegt in der Vergangenheit.');
+  until = Math.min(until, max.getTime());
+  db.prepare(`UPDATE users SET student_status = ?, student_type = ?, student_school = ?, student_valid_until = ?, student_requested_at = ?
+              WHERE id = ?`).run(autoApprove ? 'approved' : 'pending', type, school, until, now(), u.id);
+}
+
+export function decideStudent(userId, approve) {
+  const r = db.prepare("UPDATE users SET student_status = ? WHERE id = ? AND student_status IN ('pending', 'approved', 'rejected')")
+    .run(approve ? 'approved' : 'rejected', userId);
+  if (!r.changes) throw new HttpError(404, 'Keine Schüler-Anfrage für dieses Konto.');
+}
+
+export function pendingStudents() {
+  return db.prepare(`SELECT id, name, email, student_type AS type, student_school AS school, student_valid_until AS validUntil,
+                     student_requested_at AS requestedAt, student_status AS status FROM users
+                     WHERE student_status = 'pending' ORDER BY student_requested_at`).all();
 }
 
 // Adds months of premium on top of whatever remains.

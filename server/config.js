@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────────
 // Alle Preise in Cent, inklusive 19 % MwSt.
 // Kalkulation (siehe README → "Preiskalkulation"):
+//   Schüler 2,49 € → netto 2,09 € → nach Zahlungsgebühren ≈ 1,80 € (bewusst knapp kalkuliert)
 //   Monatlich 4,99 € → netto 4,19 € → nach Zahlungsgebühren ≈ 3,87 €
 //   Jährlich 49,99 € → netto 42,01 € → nach Gebühren ≈ 41,01 € (≈ 3,42 €/Monat)
 //   Laufende Kosten pro Kunde (Server, KI, Lyrics, Support) ≈ 0,40–0,90 €/Monat
@@ -28,7 +29,31 @@ export const PLANS = {
     note: '2 Monate geschenkt',
     badge: 'Beliebteste Wahl',
   },
+  // Schüler, Azubis & Studierende: halber Preis. Nur mit bestätigtem Status buchbar.
+  student_monthly: {
+    id: 'student_monthly',
+    name: 'Melody Schüler & Studenten – Monatlich',
+    priceCents: 249,
+    interval: 'month',
+    months: 1,
+    note: 'Halber Preis für Schule, Ausbildung & Studium',
+    student: true,
+  },
+  student_yearly: {
+    id: 'student_yearly',
+    name: 'Melody Schüler & Studenten – Jährlich',
+    priceCents: 2499,
+    interval: 'year',
+    months: 12,
+    note: '2 Monate geschenkt',
+    student: true,
+  },
 };
+
+// Schüler-Nachweis: Selbstauskunft wird sofort bestätigt (1 = an) und gilt bis zum angegebenen
+// Datum, höchstens 12 Monate. Mit 0 prüft ein Admin jede Anfrage (POST /api/admin/students/decide).
+export const STUDENT_AUTO_APPROVE = process.env.MELODY_STUDENT_AUTO_APPROVE !== '0';
+export const ADMIN_TOKEN = process.env.MELODY_ADMIN_TOKEN || '';
 
 // Gutscheine: einmalige Zahlung, kein Abo. Code kann verschenkt werden.
 export const VOUCHERS = {

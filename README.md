@@ -25,6 +25,18 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 - **Effekt-Pads**: Echo-Out, Filter-Sweep, Bass-Kill, Vinyl-Stopp.
 - Equalizer mit 10 Bändern und 12 weiteren Presets.
 
+### 🚗 Fahrermodus – sicher unterwegs
+- **Karte mit Navigation** (OpenStreetMap): Ziel suchen, Route, Abbiege-Hinweise mit Entfernung, Ankunftszeit, automatische Neuberechnung beim Verfahren.
+- **Sprachansagen** („In 350 Metern links abbiegen auf Hauptstraße“). Die Musik wird dabei automatisch leiser.
+- **Sprachsteuerung**: „Nächster Song“, „Leiser“, „Spiel Sommerwind“, „Spiel Gute Laune“, „Navigiere nach Zeil 10“, „Wann kommen wir an?“, „Gefällt mir“.
+- **Sicherheit zuerst**: riesige Knöpfe, immer dunkel, Bildschirm bleibt an. **Ab 10 km/h sind Tippen und Suchen gesperrt.** Bedienen geht dann per Sprache, oder der **Beifahrer** schaltet die Sperre für 15 Minuten frei.
+- Hoch- und Querformat, damit es auch in einer Handyhalterung oder auf einem Tablet am Armaturenbrett passt.
+- Mit „Beenden“ geht es zurück; die Musik läuft weiter, auch im Hintergrund.
+
+### 🎉 Party & 🌙 Entspannen
+- **Party-Modus**: Vollbild-Lichtshow im Takt der Musik, Übergänge von 6 s zwischen den Songs, Klang „Melody Party“, DJ-Pads. Beim Beenden kommt der eigene Sound zurück. Die Lichtshow pulsiert sanft, ohne Stroboskop, und bleibt bei „Bewegung reduzieren“ ruhig.
+- **Entspannen**: weicher Klang, ruhiger Mix, die Musik endet nach 30 Minuten.
+
 ### ⬇️ Herunterladen & offline hören
 - **Entdecken**: Songs aus dem Melody-Katalog streamen (mit Spulen) oder **herunterladen**, einzeln, als ganze Playlist oder alles auf einmal.
 - Heruntergeladene Songs laufen **ohne Internet**. Der Tab „Offline“ in der Bibliothek zeigt alles, was offline verfügbar ist, samt Speicherbedarf.
@@ -58,6 +70,15 @@ Alle Preise stehen an **einer Stelle**: `server/config.js`.
 | Laufende Kosten pro Kunde & Monat (Server, Speicher, KI bei Ø 10 Mixen, Support) | ca. 0,40 – 0,90 € | ca. 0,40 – 0,90 € |
 | **Marge** | **≈ 3,00 – 3,50 €** | **≈ 2,50 – 3,00 €** |
 
+**Schüler, Azubis & Studierende: halber Preis** 🎓
+
+| | Preis | pro Monat | Einnahme nach MwSt. & Gebühren |
+|---|---|---|---|
+| Schüler monatlich | **2,49 €** | 2,49 € | ≈ 1,80 € |
+| Schüler jährlich | **24,99 €** | 2,08 € | ≈ 1,82 € / Monat |
+
+Bestätigung im Konto: Schule/Ausbildung/Studium, Name der Einrichtung, voraussichtliches Ende. Die Bestätigung gilt höchstens 12 Monate und wird dann neu abgefragt. Zusätzlich bestätigt man: mindestens 16 Jahre oder Einverständnis der Eltern. Standard ist die Selbstauskunft mit sofortiger Freischaltung. Mit `MELODY_STUDENT_AUTO_APPROVE=0` prüft ein Admin jede Anfrage (`GET /api/admin/students`, `POST /api/admin/students/decide` mit `Authorization: Bearer $MELODY_ADMIN_TOKEN`). Für größere Mengen lohnt ein Prüfdienst wie UNiDAYS oder SheerID.
+
 | Gutschein | Preis | pro Monat |
 |---|---|---|
 | 1 Monat | 4,99 € | 4,99 € |
@@ -85,7 +106,7 @@ Danach `http://localhost:8080` öffnen.
 
 Ohne Stripe-Schlüssel läuft ein **Testmodus**: Abos und Gutscheine lassen sich ausprobieren, es wird nichts abgebucht. Ohne Anthropic-Schlüssel nutzt „Für dich“ die eingebaute Empfehlungs-Engine.
 
-Tests: `npm test` (18 Tests für Konten, Abos, Gutscheine, Stripe-Webhooks, KI-Anfrage und Sicherheit).
+Tests: `npm test` (20 Tests für Konten, Abos, Gutscheine, Stripe-Webhooks, KI-Anfrage und Sicherheit).
 
 ### Demo ohne Server
 `tools/build-demo.sh` baut eine Version, bei der Konten und Zahlungen im Browser simuliert werden. Sie eignet sich zum Vorführen und lässt sich auf jedem statischen Hosting (z. B. GitHub Pages) betreiben.
@@ -115,10 +136,26 @@ Produkte musst du in Stripe nicht anlegen, die Preise kommen direkt aus `server/
 ### KI einrichten
 Einen API-Schlüssel unter [console.anthropic.com](https://console.anthropic.com) erstellen und als `ANTHROPIC_API_KEY` setzen.
 
+## 🚘 Melody im Auto: was heute geht und was als Nächstes kommt
+
+| | Heute (Web-App) | Mit nativer App (Capacitor) |
+|---|---|---|
+| Musik über Bluetooth/AUX/USB im Auto | ✅ | ✅ |
+| Titel, Cover und Lenkradtasten im Autodisplay | ✅ (Media Session) | ✅ |
+| Fahrermodus mit Karte, Navigation und Sprachsteuerung auf dem Handy | ✅ | ✅ |
+| Melody **direkt auf dem Bildschirm des Autos** (Apple CarPlay / Android Auto) | ❌ technisch nicht möglich | ✅ mit Audio-App-Freigabe von Apple bzw. Android-Auto-Media-Vorlage |
+| Navigation auf dem Autobildschirm | ❌ | nur mit Navigations-Freigabe (strenge Auflagen) |
+| Autos mit eingebautem Android (Android Automotive: Volvo, Polestar, Renault …) | ❌ | ✅ als Media-App über Google Play |
+
+Für Karten-Kacheln, Ortssuche und Routen nutzt Melody die freien OpenStreetMap-Dienste. Diese sind für Tests gedacht. Bei vielen Nutzern braucht es einen Anbieter (z. B. MapTiler, Stadia Maps, eigener OSRM-Server). Die Adressen lassen sich in `js/drive.js` (`DEFAULT_GEO`) austauschen.
+
 ## ⚖️ Vor dem Start mit echten Zahlungen
 
 - [ ] **Impressum, AGB, Datenschutz und Widerrufsbelehrung** in `legal/` durch geprüfte Texte ersetzen (Anwalt oder Rechtstexte-Dienst). Die Dateien sind derzeit nur Vorlagen.
 - [ ] Gewerbe anmelden und Umsatzsteuer klären.
+- [ ] **Minderjährige**: Verträge mit Minderjährigen brauchen in der Regel die Zustimmung der Eltern. Abo-Bedingungen und Einwilligung anwaltlich prüfen lassen.
+- [ ] **Schüler-Abo**: Verlängert sich ein Schüler-Abo nach Ablauf des Nachweises, muss es auf den normalen Preis umgestellt oder eine neue Bestätigung angefragt werden. Das ist noch nicht automatisiert.
+- [ ] **Navigation**: Hinweis in den AGB, dass die Navigation nur unterstützt und die Verkehrsregeln Vorrang haben.
 - [ ] **Lyrics**: LRCLIB ist eine freie Community-Datenbank. Für einen großen kommerziellen Betrieb Lizenzen über einen Lyrics-Anbieter (z. B. LyricFind, Musixmatch) prüfen.
 - [ ] **Musik-Katalog**: Melody spielt die eigene Musik der Kunden und Internetradio. Ein Katalog der großen Labels wie bei Spotify erfordert Lizenzverträge (Labels, GEMA) mit Millionen-Vorauszahlungen. Legal und günstig erweitern lässt sich Melody mit freien Katalogen wie Jamendo oder Audius.
 

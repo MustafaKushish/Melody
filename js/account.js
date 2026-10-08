@@ -119,7 +119,7 @@ const BRAND = '<div class="brand big"><img src="icons/icon.svg" alt=""><span>Mel
 function authHTML() {
   const p = state.pricing;
   const trial = p?.trialDays ? `${p.trialDays} Tage kostenlos testen` : 'Jetzt starten';
-  const from = p ? euro(Math.min(...p.plans.map((x) => x.priceCents / x.months))) : '';
+  const from = p ? euro(Math.min(...p.plans.filter((x) => !x.student).map((x) => x.priceCents / x.months))) : '';
   return `<div class="gate-card">${BRAND}
     <h1>Musik, die dich mitnimmt.</h1>
     <p class="sub">Werbefrei · Mitsingen mit Lyrics · KI-Empfehlungen · Sound-Studio wie ein DJ</p>
@@ -141,7 +141,7 @@ function authHTML() {
         <span>Ich akzeptiere die <a href="legal/agb.html" target="_blank">AGB</a> und habe die <a href="legal/datenschutz.html" target="_blank">Datenschutzerklärung</a> gelesen.</span></label>
       <button class="btn btn-primary block">${trial}</button>
     </form>`}
-    ${from ? `<p class="muted center">${p.trialDays ? `${p.trialDays} Tage gratis, danach ` : ''}ab ${from} pro Monat · jederzeit kündbar</p>` : ''}
+    ${from ? `<p class="muted center">${p.trialDays ? `${p.trialDays} Tage gratis, danach ` : ''}ab ${from} pro Monat · jederzeit kündbar${p.plans.some((x) => x.student) ? '<br>Schüler, Azubis & Studierende: halber Preis 🎓' : ''}</p>` : ''}
     <p class="muted center small"><a href="legal/impressum.html" target="_blank">Impressum</a> · <a href="legal/datenschutz.html" target="_blank">Datenschutz</a> · <a href="legal/agb.html" target="_blank">AGB</a></p>
   </div>`;
 }
@@ -181,7 +181,7 @@ function plansHTML() {
   const renewing = state.account?.subscription && !state.account.subscription.cancelAtPeriodEnd &&
     ['active', 'trialing', 'past_due'].includes(state.account.subscription.status);
   return `${p.demo ? '<div class="demo-note">Testmodus: Zahlungen werden nur simuliert, es wird nichts abgebucht.</div>' : ''}
-  <div class="plans">${p.plans.map((pl) => {
+  <div class="plans">${p.plans.filter((pl) => !pl.student).map((pl) => {
     const perMonth = pl.priceCents / pl.months;
     const active = renewing && cur === pl.id;
     return `<div class="plan${pl.badge ? ' featured' : ''}">
@@ -193,8 +193,45 @@ function plansHTML() {
         ${active ? 'Dein aktuelles Abo' : pl.interval === 'year' ? 'Jährlich wählen' : 'Monatlich wählen'}</button>
     </div>`;
   }).join('')}</div>
+  ${studentHTML()}
   <ul class="features-list">${FEATURES.map(([i, t]) => `<li>${icon(i)}${t}</li>`).join('')}</ul>
   <p class="muted small center">Preise inkl. 19 % MwSt. Abos verlängern sich automatisch und sind jederzeit zum Ende der Laufzeit kündbar.</p>`;
+}
+
+function studentHTML() {
+  const p = state.pricing;
+  const plans = p?.plans.filter((pl) => pl.student) || [];
+  if (!plans.length) return '';
+  const st = state.account?.student || { status: 'none' };
+  const verified = st.status === 'approved' && st.validUntil > Date.now();
+  const cur = state.account?.plan?.id;
+  const head = `<div class="student-head">${icon('school')}<div><h3>Schüler, Azubis & Studierende: halber Preis</h3>
+    <p>Ab <b>${euro(plans[0].priceCents)}</b> im Monat – weil Musik keine Frage des Taschengelds sein sollte.</p></div></div>`;
+  if (verified) {
+    return `<div class="panel student">${head}
+      <p class="ok small">${icon('check')} Bestätigt: ${esc(st.school || '')} · gültig bis ${fmtDate(st.validUntil)}</p>
+      <div class="plans compact">${plans.map((pl) => `<div class="plan">
+        <div class="plan-name">${pl.interval === 'year' ? 'Jährlich' : 'Monatlich'}</div>
+        <div class="price">${euro(pl.priceCents)}<span>/${pl.interval === 'year' ? 'Jahr' : 'Monat'}</span></div>
+        <div class="plan-note">${pl.months > 1 ? `entspricht ${euro(pl.priceCents / pl.months)} pro Monat · ` : ''}${esc(pl.note)}</div>
+        <button class="btn btn-primary block" data-action="buy" data-kind="plan" data-id="${pl.id}" ${cur === pl.id ? 'disabled' : ''}>${cur === pl.id ? 'Dein aktuelles Abo' : 'Schüler-Abo wählen'}</button></div>`).join('')}</div></div>`;
+  }
+  if (st.status === 'pending') {
+    return `<div class="panel student">${head}<p>${icon('timer')} Deine Anfrage wird geprüft. Du bekommst Bescheid, sobald sie bestätigt ist.</p></div>`;
+  }
+  const y = new Date().getFullYear();
+  return `<div class="panel student">${head}
+    ${st.status === 'expired' ? '<p class="small">Dein Nachweis ist abgelaufen – bitte kurz neu bestätigen.</p>' : ''}
+    ${st.status === 'rejected' ? '<p class="small">Deine letzte Anfrage wurde nicht bestätigt. Bitte prüfe deine Angaben.</p>' : ''}
+    <form class="stack" data-form="student">
+      <div class="seg">${[['schule', 'Schule'], ['ausbildung', 'Ausbildung'], ['studium', 'Studium']].map(([v, l], i) =>
+        `<label><input type="radio" name="type" value="${v}" ${i === 0 ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div>
+      <label>Name der Schule, Uni oder des Betriebs<input class="input plain" name="school" maxlength="120" required placeholder="z. B. Goethe-Gymnasium Frankfurt"></label>
+      <label>Voraussichtlich bis (Monat/Jahr)<input class="input plain" name="validUntil" type="month" min="${y}-01" value="${y + 1}-07"></label>
+      <label class="check"><input type="checkbox" name="confirm" required><span>Ich bin zurzeit Schüler/in, Azubi oder Student/in. Melody darf einen Nachweis (z. B. Schülerausweis) stichprobenartig anfragen.</span></label>
+      <label class="check"><input type="checkbox" name="guardian" required><span>Ich bin mindestens 16 Jahre alt – oder meine Eltern sind mit dem Abo einverstanden.</span></label>
+      <button class="btn btn-primary">Status bestätigen</button>
+    </form></div>`;
 }
 
 function redeemHTML() {
@@ -396,6 +433,20 @@ export const accountActions = {
 };
 
 export const accountForms = {
+  student: async (form) => {
+    try {
+      const { account } = await api('/student/apply', {
+        method: 'POST',
+        body: {
+          type: form.querySelector('[name=type]:checked')?.value, school: form.school.value,
+          validUntil: form.validUntil.value, confirm: form.confirm.checked, guardian: form.guardian.checked,
+        },
+      });
+      setAccount(account);
+      toast(account.student.status === 'approved' ? 'Bestätigt! Du kannst jetzt das Schüler-Abo wählen.' : 'Danke! Wir prüfen deine Anfrage.');
+      if ($('#gate').hidden) hooks.render(); else showGate('paywall');
+    } catch (e) { toast(e.message); }
+  },
   login: async (form) => {
     try {
       const { account } = await api('/auth/login', { method: 'POST', body: { email: form.email.value, password: form.password.value } });

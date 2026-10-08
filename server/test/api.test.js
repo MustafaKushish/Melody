@@ -148,3 +148,26 @@ test('Katalog: Songs streamen mit Range-Anfragen (zum Spulen)', async () => {
   assert.equal((await part.arrayBuffer()).byteLength, 100);
   assert.match(part.headers.get('content-range'), /^bytes 100-199\/\d+$/);
 });
+
+test('Schüler-Abo: nur mit Nachweis, halber Preis', async () => {
+  const api = client();
+  await api('/auth/register', { method: 'POST', body: { ...user, email: 'schueler@example.com' } });
+  const pricing = (await api('/pricing')).data;
+  const sm = pricing.plans.find((p) => p.id === 'student_monthly');
+  assert.equal(sm.priceCents, 249);
+  assert.equal(pricing.plans.find((p) => p.id === 'student_yearly').priceCents, 2499);
+  assert.equal((await api('/billing/checkout', { method: 'POST', body: { kind: 'plan', id: 'student_monthly' } })).status, 403);
+  assert.equal((await api('/student/apply', { method: 'POST', body: { type: 'schule', school: 'Gymnasium Musterstadt', confirm: true } })).status, 400);
+  const ok = await api('/student/apply', { method: 'POST', body: { type: 'schule', school: 'Gymnasium Musterstadt', validUntil: '2099-07', confirm: true, guardian: true } });
+  assert.equal(ok.data.account.student.status, 'approved');
+  const maxDays = (ok.data.account.student.validUntil - Date.now()) / 86400000;
+  assert.ok(maxDays <= 367, 'höchstens ein Jahr gültig');
+  const buy = await api('/billing/checkout', { method: 'POST', body: { kind: 'plan', id: 'student_monthly' } });
+  assert.equal(buy.status, 200);
+  assert.equal((await api('/me')).data.account.plan.id, 'student_monthly');
+});
+
+test('Admin-Endpunkte brauchen Token', async () => {
+  const r = await fetch(base + '/api/admin/students');
+  assert.equal(r.status, 401);
+});

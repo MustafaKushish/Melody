@@ -7,6 +7,8 @@ const DAY = 86400000;
 const PLANS = [
   { id: 'monthly', name: 'Melody Premium – Monatlich', priceCents: 499, interval: 'month', months: 1, note: 'Monatlich kündbar' },
   { id: 'yearly', name: 'Melody Premium – Jährlich', priceCents: 4999, interval: 'year', months: 12, note: '2 Monate geschenkt', badge: 'Beliebteste Wahl' },
+  { id: 'student_monthly', name: 'Melody Schüler & Studenten – Monatlich', priceCents: 249, interval: 'month', months: 1, note: 'Halber Preis für Schule, Ausbildung & Studium', student: true },
+  { id: 'student_yearly', name: 'Melody Schüler & Studenten – Jährlich', priceCents: 2499, interval: 'year', months: 12, note: '2 Monate geschenkt', student: true },
 ];
 const VOUCHERS = [
   { id: 'v1', months: 1, priceCents: 499, name: 'Melody Gutschein – 1 Monat' },
@@ -34,6 +36,7 @@ function account(u) {
     id: u.id, name: u.name, email: u.email, createdAt: u.createdAt, access: premium || trial,
     status: premium ? 'premium' : trial ? 'trial' : 'expired', trialEnds: u.trialEnds, premiumUntil: u.premiumUntil,
     plan: u.plan ? { id: u.plan, name: PLANS.find((p) => p.id === u.plan).name } : null, subscription: null,
+    student: u.student || { status: 'none' },
   };
 }
 
@@ -92,6 +95,7 @@ export async function demoApi(path, method, body = {}) {
       if (body.kind === 'plan') {
         const p = PLANS.find((x) => x.id === body.id);
         if (!p) throw new ApiError(400, 'Unbekanntes Produkt.');
+        if (p.student && !(u.student?.status === 'approved' && u.student.validUntil > Date.now())) throw new ApiError(403, 'Bitte bestätige zuerst deinen Schüler-Status.');
         extend(u, p.months);
         u.plan = p.id;
         return done({ demo: true });
@@ -101,6 +105,17 @@ export async function demoApi(path, method, body = {}) {
       const c = code();
       db.vouchers.push({ code: c, months: v.months, buyer: u.id, createdAt: Date.now(), redeemedAt: null });
       return done({ demo: true, code: c });
+    }
+    case 'POST /student/apply': {
+      const u = need();
+      if (!['schule', 'ausbildung', 'studium'].includes(body.type)) throw new ApiError(400, 'Bitte wähle Schule, Ausbildung oder Studium.');
+      if (String(body.school || '').trim().length < 3) throw new ApiError(400, 'Bitte gib den Namen deiner Schule, Uni oder deines Ausbildungsbetriebs an.');
+      if (!body.confirm || !body.guardian) throw new ApiError(400, 'Bitte bestätige beide Punkte.');
+      const max = new Date(); max.setFullYear(max.getFullYear() + 1);
+      const m = String(body.validUntil || '').match(/^(\d{4})-(\d{2})$/);
+      const until = Math.min(m ? new Date(+m[1], +m[2], 0, 23, 59).getTime() : max.getTime(), max.getTime());
+      u.student = { status: 'approved', type: body.type, school: body.school.trim(), validUntil: until };
+      return done({ account: account(u) });
     }
     case 'POST /billing/cancel-demo': need().plan = null; return done({ ok: true });
     case 'POST /billing/portal': throw new ApiError(400, 'Im Demo-Modus nicht verfügbar.');

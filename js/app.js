@@ -7,6 +7,8 @@ import { lyricsActions, lyricsForms, onLyricsInput, onTrackChange, updateSingSta
 import { viewForYou, forYouActions, forYouForms, MOODS } from './foryou.js';
 import { viewDiscover, catalogActions, loadCatalog, statusBadge, isCatalog, playable, download, removeDownload, downloadedBytes, mb, catalogCards } from './catalog.js';
 import { viewShared, shareActions } from './share.js';
+import { driveActions, driveForms, closeDrive, isDriveOpen } from './drive.js';
+import { partyActions, closeParty, isPartyOpen } from './party.js';
 import { DEMO } from './api.js';
 import { viewStudio, afterStudioRender, studioActions, onStudioInput, reportPreset } from './studio.js';
 import {
@@ -87,19 +89,20 @@ const NAV = [
   { id: 'playlists', label: 'Playlists', icon: 'playlist' },
   { id: 'radio', label: 'Radio', icon: 'radio' },
   { id: 'studio', label: 'Sound-Studio', icon: 'tune' },
+  { id: 'drive', label: 'Fahrermodus', icon: 'car', action: 'drive' },
   { id: 'account', label: 'Konto & Abo', icon: 'account' },
   { id: 'settings', label: 'Einstellungen', icon: 'settings' },
 ];
 
 function renderNav() {
-  const item = (n) => `<button class="nav-item" data-action="nav" data-view="${n.id}">${icon(n.icon)}<span>${n.label}</span></button>`;
+  const item = (n) => `<button class="nav-item" data-action="${n.action || 'nav'}" data-view="${n.id}">${icon(n.icon)}<span>${n.label}</span></button>`;
   $('#side-nav').innerHTML = NAV.map(item).join('');
   $('#bottom-nav').innerHTML = NAV.filter((n) => n.mobile).map(item).join('') + item({ id: 'more', label: 'Mehr', icon: 'grid' });
 }
 
 function viewMore() {
   return `<h1>Mehr</h1><div class="more-list">${NAV.filter((n) => !n.mobile).map((n) =>
-    `<button class="sheet-item" data-action="nav" data-view="${n.id}">${icon(n.icon)}${n.label}</button>`).join('')}</div>`;
+    `<button class="sheet-item" data-action="${n.action || 'nav'}" data-view="${n.id}">${icon(n.icon)}${n.label}</button>`).join('')}</div>`;
 }
 
 function parseRoute() {
@@ -216,6 +219,13 @@ function emptyLibrary() {
 }
 
 // ---------- Views ----------
+
+const MODES_HTML = () => `<div class="modes">
+  <button class="mode drive-m" data-action="drive">${icon('car')}<b>Fahren</b><span>Karte, Navigation & Sprachsteuerung</span></button>
+  <button class="mode party-m" data-action="party">${icon('party')}<b>Party</b><span>Lichtshow & DJ-Übergänge</span></button>
+  <button class="mode chill-m" data-action="chill">${icon('moon')}<b>Entspannen</b><span>Weicher Klang, endet nach 30 Min.</span></button>
+</div>`;
+
 async function fillHomeCatalog() {
   const list = await loadCatalog();
   const el = $('#home-catalog');
@@ -236,6 +246,7 @@ function viewHome() {
       </div>
       ${DEMO ? '<p class="demo-note" style="margin-top:16px">Demo-Version: Tippe auf „Songs entdecken“ und spiele die Melody-Songs ab – mit Lyrics zum Mitsingen. Du kannst auch eigene Musikdateien importieren.</p>' : ''}
       <div id="home-catalog"></div>
+      ${MODES_HTML()}
       <div class="features">
         <div class="feature">${icon('heartOutline')}<b>100 % werbefrei</b><span>Keine Werbung, kein Tracking, keine Datenweitergabe.</span></div>
         <div class="feature">${icon('download')}<b>Herunterladen & offline</b><span>Songs laden und überall ohne Internet hören.</span></div>
@@ -263,6 +274,7 @@ function viewHome() {
       <div class="stat"><b>${fmtLong(total)}</b><span>Musik</span></div>
       <div class="stat"><b>${plays}</b><span>Wiedergaben</span></div>
     </div>
+    ${MODES_HTML()}
     <section class="ai-banner">
       <div><span class="ai-badge">${icon('sparkle')} KI</span><h2>Wonach ist dir gerade?</h2>
         <p>Melody kennt deinen Geschmack und stellt dir in Sekunden den passenden Mix zusammen.</p></div>
@@ -1068,8 +1080,8 @@ const ACTIONS = {
   },
 };
 
-Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions);
-const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms };
+Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions, driveActions, partyActions);
+const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms, ...driveForms };
 
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-action]');
@@ -1159,6 +1171,8 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     if (!$('#sheet').hidden) closeSheet();
     else if (isSingOpen()) closeSing();
+    else if (isPartyOpen()) closeParty();
+    else if (isDriveOpen()) closeDrive();
     else closeNowPlaying();
     return;
   }
@@ -1224,6 +1238,7 @@ hooks.registerList = registerList;
 hooks.createPlaylist = createPlaylist;
 hooks.reportPreset = reportPreset;
 hooks.play = (ids, i) => player.playList(ids, i);
+hooks.toggleFav = toggleFav;
 hooks.closeSheet = closeSheet;
 hooks.go = go;
 window.addEventListener('online', () => { toast('Wieder online'); rerenderKeepScroll(); });

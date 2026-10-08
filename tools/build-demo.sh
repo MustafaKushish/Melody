@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 OUT="${1:-dist/demo}"
 rm -rf "$OUT" && mkdir -p "$OUT"
-cp -r css js icons catalog legal manifest.webmanifest sw.js "$OUT/"
+cp -r css js icons catalog legal vendor manifest.webmanifest sw.js "$OUT/"
 sed 's/<html lang="de">/<html lang="de" data-demo="1">/' index.html > "$OUT/index.html"
 # Variant without the document skeleton, for hosts that wrap the page themselves.
 python3 - "$OUT" <<'PY'

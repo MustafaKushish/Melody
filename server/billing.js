@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import Stripe from 'stripe';
 import { db, now, tx } from './db.js';
-import { HttpError, getUser, extendPremium } from './auth.js';
+import { HttpError, getUser, extendPremium, isStudentVerified } from './auth.js';
 import {
   PLANS, VOUCHERS, CURRENCY, PUBLIC_URL, TRIAL_DAYS,
   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, DEMO_PAYMENTS,
@@ -57,6 +57,9 @@ function hasRenewingSubscription(u) {
 export async function checkout(user, { kind, id }) {
   const item = kind === 'plan' ? PLANS[id] : kind === 'voucher' ? VOUCHERS[id] : null;
   if (!item) throw new HttpError(400, 'Unbekanntes Produkt.');
+  if (item.student && !isStudentVerified(user)) {
+    throw new HttpError(403, 'Bitte bestätige zuerst, dass du Schüler, Azubi oder Student bist.');
+  }
   if (kind === 'plan' && hasRenewingSubscription(user) && user.plan === id) {
     throw new HttpError(409, 'Dieses Abo hast du bereits.');
   }
