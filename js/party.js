@@ -40,7 +40,7 @@ function loop() {
     if (!P.open) return;
     g.clearRect(0, 0, W, H);
     let bass = 0, energy = 0;
-    if (data && player.playing) {
+    if (data && player.playing && player.analyser) {
       player.analyser.getByteFrequencyData(data);
       for (let i = 0; i < 6; i++) bass += data[i];
       bass /= 6 * 255;

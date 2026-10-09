@@ -75,6 +75,12 @@ function impulseResponse(ctx, seconds = 2.6, decay = 3) {
   return buf;
 }
 
+// Songs streamed from another site (Audius) must not run through Web Audio: without CORS the browser
+// mutes them there. They play on plain media elements, without sound effects.
+const foreign = (t) => {
+  try { return !!t?.url && !t.downloaded && new URL(t.url, location.href).origin !== location.origin; } catch { return false; }
+};
+
 class Player extends EventTarget {
   constructor() {
     super();
@@ -274,7 +280,7 @@ class Player extends EventTarget {
   // ---------- Audio graph ----------
   // decks → mix → [vocal remover] → 10-band EQ → DJ filter → dry/echo/reverb → stereo width → master → analyser
   initGraph() {
-    if (this.ctx || !this.settings.fx || (isIOS && (document.hidden || this.graphHold))) return;
+    if (this.ctx || !this.settings.fx || (isIOS && (document.hidden || this.graphHold)) || foreign(this.track)) return;
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     const ctx = (this.ctx = new AC());
@@ -616,6 +622,7 @@ class Player extends EventTarget {
 
   async load(i, autoplay = true, startAt = 0) {
     if (i < 0 || i >= this.queue.length) return;
+    if (this.ctx && foreign(this.lookup(this.queue[i]))) await this.detachGraph();
     const token = ++this.loadToken;
     this.cancelFade();
     this.stopRadio();
@@ -665,6 +672,7 @@ class Player extends EventTarget {
   }
 
   async crossfadeTo(i) {
+    if (this.ctx && foreign(this.lookup(this.queue[i]))) await this.detachGraph();
     this.fading = true;
     const token = ++this.loadToken;
     const from = this.d;

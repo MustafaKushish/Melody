@@ -40,6 +40,8 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; }
+/* The page background ends with the bars' colour: if iOS leaves a strip below the layout, it looks like part of the bar. */
+html { background: var(--bg-2); }
 body {
   background: var(--bg);
   color: var(--text);

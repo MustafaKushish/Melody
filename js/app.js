@@ -27,7 +27,7 @@ import {
   coverUrl, coverHTML, groupCover, setRangeP, openSheet, closeSheet, promptSheet, confirmSheet,
 } from './core.js';
 
-const VERSION = '3.2.0';
+const VERSION = '3.2.1';
 
 const UI_KEY = 'melody.ui';
 const ui = (() => {
@@ -968,8 +968,9 @@ function startViz() {
   const g = canvas.getContext('2d');
   const data = new Uint8Array(player.analyser.frequencyBinCount);
   const draw = () => {
-    if ($('#now-playing').hidden || !player.playing || player.mode !== 'library') {
+    if ($('#now-playing').hidden || !player.playing || player.mode !== 'library' || !player.analyser) {
       vizRunning = false;
+      canvas.closest('.np-art')?.classList.toggle('no-viz', !player.analyser);
       g.clearRect(0, 0, canvas.width, canvas.height);
       return;
     }
