@@ -156,6 +156,24 @@ export function dragKey(e) {
   return true;
 }
 
+// ---------- Full-screen player: swipe down to close, swipe the cover for next / previous ----------
+let npSwipe = null;
+document.addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'mouse' || !e.target.closest?.('#now-playing .np-head, #now-playing .np-art')) return;
+  if (e.target.closest('#np-lyrics, button, input')) return;
+  npSwipe = { x: e.clientX, y: e.clientY, id: e.pointerId, t: Date.now(), onCover: !!e.target.closest('#np-cover') };
+});
+document.addEventListener('pointerup', (e) => {
+  if (!npSwipe || e.pointerId !== npSwipe.id) return;
+  const s = npSwipe;
+  npSwipe = null;
+  const dx = e.clientX - s.x, dy = e.clientY - s.y;
+  if (Date.now() - s.t > 800) return;
+  if (dy > 90 && Math.abs(dx) < 60) $('#now-playing [data-action=close-np]')?.click();
+  else if (s.onCover && Math.abs(dx) > 60 && Math.abs(dy) < 45 && player.mode === 'library') { if (dx < 0) player.next(); else player.prev(); }
+});
+document.addEventListener('pointercancel', () => { npSwipe = null; swipe = null; });
+
 // ---------- Swipe left/right on the mini player: next / previous song ----------
 let swipe = null;
 document.addEventListener('pointerdown', (e) => {

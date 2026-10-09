@@ -94,6 +94,16 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 - Volle **Tastaturbedienung**: Sprung-Link zum Inhalt, sichtbarer Fokus, Fokus bleibt in offenen Fenstern und kehrt danach zurück, Leertaste löst Knöpfe aus, **?** zeigt alle Kürzel.
 - **Ziehen zum Sortieren**: Titel in Playlists und in der Warteschlange am Griff verschieben, mit Maus, Finger oder Pfeiltasten.
 - **Wischen** über den Mini-Player auf dem Handy: nächstes / vorheriges Lied.
+- **Gesten im Vollbild-Player**: nach unten wischen schließt ihn, über das Cover wischen wechselt das Lied.
+
+### 🖼 Cover & Infos für eigene Songs
+- Songs ohne Cover zeigen im Vollbild-Player **„Cover hinzufügen“**.
+- **Foto wählen** (aus der Mediathek des Handys, wird automatisch verkleinert) oder **online suchen** in der freien Datenbank MusicBrainz: Treffer antippen übernimmt Titel, Künstler, Album, Jahr und das Cover (Cover Art Archive).
+- Titel, Künstler, Album, Jahr und Genre lassen sich jederzeit ändern. Titel mit arabischer, persischer oder hebräischer Schrift werden richtig herum angezeigt.
+
+### 📱 Für jedes Gerät angepasst
+- Geprüft auf iPhone SE bis Pro Max, iPad und Computer, jeweils hoch und quer: Der Vollbild-Player passt sein Cover an den freien Platz an, quer zeigt er zwei Spalten. Die Knöpfe darunter sind eine wischbare Reihe.
+- Kein „Hängenbleiben“ von Hervorhebungen auf Touch-Bildschirmen, dafür eine kurze Rückmeldung beim Antippen. Der Erkennen-Knopf weicht beim Scrollen aus.
 
 ### 🎉 Party & 🌙 Entspannen
 - **Party-Modus**: Vollbild-Lichtshow im Takt der Musik, Übergänge von 6 s zwischen den Songs, Klang „Melody Party“, DJ-Pads. Beim Beenden kommt der eigene Sound zurück. Die Lichtshow pulsiert sanft, ohne Stroboskop, und bleibt bei „Bewegung reduzieren“ ruhig.

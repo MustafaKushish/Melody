@@ -17,6 +17,7 @@ import { startConnect, stopConnect, connectActions, onConnectInput, onConnectCha
 import { viewSearch, afterSearchRender, onSearchInput, openSearch, searchActions, searchForms } from './search.js';
 import { viewPodcasts, viewPodcast, podcastActions, podcastForms, homeSection as podHome, refreshSubscriptions, fmtTime as podTime } from './podcasts.js';
 import { DEMO } from './api.js';
+import { editTrackSheet, metaActions, metaForms, onMetaChange } from './meta.js';
 import { a11y, applyA11y, setA11y, TEXT_SIZES, trapTab, dragKey, registerSorter } from './a11y.js';
 import { kidsActions, kidsForms, kidsActive, kidsAllows, kidsKey, onKidsInput, initKids, refreshKids } from './kids.js';
 import { viewStudio, afterStudioRender, studioActions, onStudioInput, reportPreset } from './studio.js';
@@ -25,7 +26,7 @@ import {
   coverUrl, coverHTML, groupCover, setRangeP, openSheet, closeSheet, promptSheet, confirmSheet,
 } from './core.js';
 
-const VERSION = '3.0.0';
+const VERSION = '3.1.0';
 
 const UI_KEY = 'melody.ui';
 const ui = (() => {
@@ -159,7 +160,7 @@ function render() {
   main.innerHTML = fn();
   hydrateIcons(main);
   const fab = $('#rc-fab');
-  if (fab) fab.hidden = view === 'recognize';
+  if (fab) { fab.hidden = view === 'recognize'; fab.classList.remove('away'); }
   const navView = { album: 'library', artist: 'library', playlist: 'playlists', premium: 'account', shared: 'playlists', podcast: 'podcasts' }[view] || view;
   document.querySelectorAll('.nav-item').forEach((el) => {
     const on = el.dataset.view === navView;
@@ -634,7 +635,7 @@ function trackMenu(id, playlistId, index) {
     ${item('m-fav', t.favorite ? 'heart' : 'heartOutline', t.favorite ? 'Aus Lieblingssongs entfernen' : 'Zu Lieblingssongs', t.favorite ? 'on' : '')}
     ${item('m-album', 'album', 'Zum Album')}
     ${item('m-artist', 'person', 'Zum Künstler')}
-    ${item('m-edit', 'edit', 'Infos bearbeiten')}
+    ${item('m-edit', t.cover ? 'edit' : 'image', t.cover ? 'Infos & Cover bearbeiten' : 'Infos & Cover ergänzen')}
     ${item('m-lyrics', 'lyrics', 'Lyrics bearbeiten')}
     ${playlistId ? item('m-remove-pl', 'close', 'Aus dieser Playlist entfernen') : ''}
     ${item('m-delete', 'delete', isCatalog(t) ? 'Aus Bibliothek entfernen' : 'Vom Gerät löschen', 'danger')}`);
@@ -706,17 +707,6 @@ function speedSheet() {
   const rates = pod ? [0.8, 1, 1.2, 1.4, 1.6, 1.8, 2, 2.5] : [0.5, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
   openSheet(`<h3>${pod ? 'Podcast-Geschwindigkeit' : 'Wiedergabegeschwindigkeit'}</h3>
     ${rates.map((r) => `<button class="sheet-item${cur === r ? ' on' : ''}" data-action="rate" data-rate="${r}">${icon('speed')}${String(r).replace('.', ',')}×${r === 1 ? ' (Normal)' : ''}</button>`).join('')}`);
-}
-
-function editSheet(t) {
-  state.menu = { id: t.id };
-  openSheet(`<h3>Infos bearbeiten</h3><form data-form="edit">
-    <label>Titel<input class="input" name="title" value="${esc(t.title)}" required></label>
-    <label>Künstler<input class="input" name="artist" value="${esc(t.artist)}" required></label>
-    <label>Album<input class="input" name="album" value="${esc(t.album)}" required></label>
-    <label>Jahr<input class="input" name="year" value="${esc(t.year || '')}" inputmode="numeric" maxlength="4"></label>
-    <div class="row" style="justify-content:flex-end"><button type="button" class="btn" data-action="close-sheet">Abbrechen</button>
-    <button class="btn btn-primary">Speichern</button></div></form>`);
 }
 
 // ---------- Library mutations ----------
@@ -851,6 +841,8 @@ function updatePlayerUI() {
     const c = tmp.firstElementChild;
     c.classList.add(size);
     c.id = sel.slice(1);
+    // Own songs without a picture: offer to add one right on the big cover.
+    if (size === 'xl' && !radio && !t.cover && !isCatalog(t)) c.insertAdjacentHTML('beforeend', `<button class="np-addcover" data-action="edit-current">${icon('image')}Cover hinzufügen</button>`);
     $(sel).replaceWith(c);
   }
   $('#np-bg').style.setProperty('--h', hue(radio ? title : t.album));
@@ -959,7 +951,7 @@ function startViz() {
   const canvas = $('#np-viz');
   if (canvas.hidden) return;
   const ok = player.analyser && player.mode === 'library';
-  canvas.style.visibility = ok ? 'visible' : 'hidden';
+  canvas.closest('.np-art').classList.toggle('no-viz', !ok); // without effects there is nothing to draw: give the cover the room
   if (!ok || vizRunning) return;
   vizRunning = true;
   const g = canvas.getContext('2d');
@@ -1062,7 +1054,7 @@ const ACTIONS = {
     go('album', (t.albumArtist || t.artist) + '\u0001' + t.album);
   },
   'm-artist': () => { const t = getTrack(state.menu.id); closeSheet(); closeNowPlaying(); go('artist', t.artist); },
-  'm-edit': () => editSheet(getTrack(state.menu.id)),
+  'm-edit': () => editTrackSheet(getTrack(state.menu.id)),
   'm-lyrics': () => editLyricsSheet(getTrack(state.menu.id)),
   'm-sing': async () => {
     const id = state.menu.id;
@@ -1191,8 +1183,8 @@ const ACTIONS = {
   },
 };
 
-Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions, driveActions, partyActions, fitnessActions, recognizeActions, podcastActions, searchActions, recapActions, connectActions, kidsActions);
-const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms, ...driveForms, ...podcastForms, ...searchForms, ...kidsForms };
+Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions, driveActions, partyActions, fitnessActions, recognizeActions, podcastActions, searchActions, recapActions, connectActions, kidsActions, metaActions);
+const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms, ...driveForms, ...podcastForms, ...searchForms, ...kidsForms, ...metaForms };
 
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-action]');
@@ -1219,15 +1211,6 @@ document.addEventListener('submit', async (e) => {
     render();
     searchRadio();
     $('#radio-q')?.blur();
-  } else if (kind === 'edit') {
-    const t = getTrack(state.menu.id);
-    for (const k of ['title', 'artist', 'album', 'year']) t[k] = form[k].value.trim();
-    t.albumArtist = '';
-    await db.put('tracks', t);
-    closeSheet();
-    if (player.track?.id === t.id) { player.updateMetadata(); updatePlayerUI(); }
-    rerenderKeepScroll();
-    toast('Gespeichert');
   }
 });
 
@@ -1259,7 +1242,7 @@ document.addEventListener('input', (e) => {
 
 document.addEventListener('change', (e) => {
   const el = e.target;
-  if (onRecognizeChange(el) || onConnectChange(el)) return;
+  if (onRecognizeChange(el) || onConnectChange(el) || onMetaChange(el)) return;
   if (el.dataset.a11y) { setA11y(el.dataset.a11y, el.checked); return; }
   if (el.id === 'np-seek') {
     player.seek((el.value / 1000) * (player.media.duration || 0));
@@ -1314,6 +1297,16 @@ document.addEventListener('keydown', (e) => {
   } else if (e.key.toLowerCase() === 'f' && !radio) toggleFav(player.track);
   else if (e.key.toLowerCase() === 's') recognizeListen();
 });
+
+// The floating "Erkennen" button gets out of the way while scrolling down through a list.
+let lastScroll = 0;
+$('#main').addEventListener('scroll', (e) => {
+  const y = e.target.scrollTop;
+  const fab = $('#rc-fab');
+  if (Math.abs(y - lastScroll) < 6) return;
+  fab?.classList.toggle('away', y > lastScroll && y > 80);
+  lastScroll = y;
+}, { passive: true });
 
 // Drag & drop import (desktop).
 let dragDepth = 0;
@@ -1370,6 +1363,11 @@ hooks.sing = openSing;
 hooks.recognize = () => recognizeListen();
 hooks.closeSheet = closeSheet;
 hooks.go = go;
+hooks.currentTrack = () => (player.mode === 'library' ? player.track : null);
+hooks.trackChanged = (t) => {
+  if (player.track?.id === t.id) { player.updateMetadata(); updatePlayerUI(); }
+  rerenderKeepScroll();
+};
 hooks.closeOverlays = () => {
   if (isSingOpen()) closeSing();
   if (isPartyOpen()) closeParty();
