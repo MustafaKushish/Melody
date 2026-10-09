@@ -63,7 +63,7 @@ export function viewStudio() {
   const isMelody = player.isMelodySound();
   return `<h1>Sound-Studio</h1>
     <p class="sub">Dreh an allen Reglern wie ein DJ – oder vertrau auf den Melody-Sound, den die meisten Hörer lieben.</p>
-    ${!s.fx ? `<div class="panel warn"><h3>Audio-Effekte sind aus</h3>
+    ${isIOS ? `<div class="panel"><h3>Auf iPhone und iPad ohne Klangeffekte</h3><p>Damit die Musik zuverlässig läuft – auch im Hintergrund, bei gesperrtem Bildschirm und bei Songs aus dem Netz –, spielt Melody hier ohne Equalizer und DJ-Effekte. Auf Computer und Android sind sie verfügbar.</p></div>` : !s.fx ? `<div class="panel warn"><h3>Audio-Effekte sind aus</h3>
       <p>${isIOS ? 'Auf iPhone/iPad stoppt die Musik mit Effekten bei gesperrtem Bildschirm. Für Kopfhörer-Sessions trotzdem aktivieren?' : 'Aktiviere die Effekte, um Equalizer und DJ-Pult zu nutzen.'}</p>
       <button class="btn btn-primary" data-action="fx-on">Effekte aktivieren</button></div>` : ''}
     <canvas id="studio-viz" width="900" height="90"></canvas>
@@ -184,7 +184,7 @@ export function onStudioInput(el) {
   const v = Number(el.value);
   if (key === 'rate') player.setRate(v);
   else player.setDj({ [key]: v });
-  if (!player.settings.fx && key !== 'rate' && key !== 'crossfade') player.setFx(true);
+  if (!isIOS && !player.settings.fx && key !== 'rate' && key !== 'crossfade') player.setFx(true);
   const label = $(`#v-${key}`);
   if (label) label.textContent = FMT[key](v);
   setRangeP(el);

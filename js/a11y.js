@@ -163,16 +163,36 @@ document.addEventListener('pointerdown', (e) => {
   if (e.target.closest('#np-lyrics, button, input')) return;
   npSwipe = { x: e.clientX, y: e.clientY, id: e.pointerId, t: Date.now(), onCover: !!e.target.closest('#np-cover') };
 });
+// The player follows the finger while it is pulled down, like a real sheet.
+document.addEventListener('pointermove', (e) => {
+  if (!npSwipe || e.pointerId !== npSwipe.id) return;
+  const dx = e.clientX - npSwipe.x, dy = e.clientY - npSwipe.y;
+  if (!npSwipe.drag && dy > 12 && dy > Math.abs(dx) * 1.2) npSwipe.drag = true;
+  if (!npSwipe.drag) return;
+  const np = $('#now-playing');
+  np.classList.add('dragging');
+  np.style.transform = `translateY(${Math.max(0, dy)}px)`;
+});
 document.addEventListener('pointerup', (e) => {
   if (!npSwipe || e.pointerId !== npSwipe.id) return;
   const s = npSwipe;
   npSwipe = null;
-  const dx = e.clientX - s.x, dy = e.clientY - s.y;
-  if (Date.now() - s.t > 800) return;
-  if (dy > 90 && Math.abs(dx) < 60) $('#now-playing [data-action=close-np]')?.click();
-  else if (s.onCover && Math.abs(dx) > 60 && Math.abs(dy) < 45 && player.mode === 'library') { if (dx < 0) player.next(); else player.prev(); }
+  const dx = e.clientX - s.x, dy = e.clientY - s.y, dt = Date.now() - s.t;
+  const np = $('#now-playing');
+  if (s.drag) {
+    np.classList.remove('dragging');
+    if (dy > 120 || (dy > 40 && dy / dt > 0.6)) $('#now-playing [data-action=close-np]')?.click();
+    else np.style.transform = ''; // snaps back with the transition
+    return;
+  }
+  if (dt > 800) return;
+  if (s.onCover && Math.abs(dx) > 60 && Math.abs(dy) < 45 && player.mode === 'library') { if (dx < 0) player.next(); else player.prev(); }
 });
-document.addEventListener('pointercancel', () => { npSwipe = null; swipe = null; });
+document.addEventListener('pointercancel', () => {
+  if (npSwipe?.drag) { const np = $('#now-playing'); np.classList.remove('dragging'); np.style.transform = ''; }
+  npSwipe = null;
+  swipe = null;
+});
 
 // ---------- Swipe left/right on the mini player: next / previous song ----------
 let swipe = null;

@@ -104,7 +104,7 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 - Volle **Tastaturbedienung**: Sprung-Link zum Inhalt, sichtbarer Fokus, Fokus bleibt in offenen Fenstern und kehrt danach zurück, Leertaste löst Knöpfe aus, **?** zeigt alle Kürzel.
 - **Ziehen zum Sortieren**: Titel in Playlists und in der Warteschlange am Griff verschieben, mit Maus, Finger oder Pfeiltasten.
 - **Wischen** über den Mini-Player auf dem Handy: nächstes / vorheriges Lied.
-- **Gesten im Vollbild-Player**: nach unten wischen schließt ihn, über das Cover wischen wechselt das Lied.
+- **Gesten im Vollbild-Player**: Er gleitet hoch und runter, folgt beim Herunterziehen dem Finger und schnappt zurück oder schließt; über das Cover wischen wechselt das Lied. Pausiert tritt das Cover einen Schritt zurück. Seitenwechsel blenden sanft ein.
 
 ### 🖼 Cover & Infos für eigene Songs
 - Songs ohne Cover zeigen im Vollbild-Player **„Cover hinzufügen“**.
@@ -113,7 +113,7 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 
 ### 📱 Für jedes Gerät angepasst
 - Geprüft auf iPhone SE bis Pro Max, iPad und Computer, jeweils hoch und quer: Der Vollbild-Player passt sein Cover an den freien Platz an, quer zeigt er zwei Spalten. Die Knöpfe darunter sind eine wischbare Reihe.
-- **iPhone: Musik läuft im Hintergrund und bei gesperrtem Bildschirm weiter.** iOS hält Web-Audio-Effekte an, sobald eine Home-Bildschirm-App in den Hintergrund geht. Melody übergibt die Wiedergabe dann an derselben Stelle an ein normales Audio-Element (ohne Effekte); beim nächsten Tippen in der App sind die Effekte wieder da. Mitsingen, Party und Fitness schalten Effekte nur vorübergehend ein, Entspannen auf dem iPhone gar nicht.
+- **iPhone und iPad: Musik läuft immer über ein normales Audio-Element, nie über Web Audio.** So spielt sie im Hintergrund und bei gesperrtem Bildschirm weiter, Songs aus dem Netz (Audius) haben Ton, und Pausieren hält sofort an. Equalizer, DJ-Effekte, Stimm-Entferner und Mikrofon-Hall gibt es deshalb nur auf Computer und Android; Überblenden ist auf iOS aus (iOS erlaubt keine Lautstärke-Regelung einzelner Songs).
 - iOS-Fehler „schwarzer Streifen unten“ bei Home-Bildschirm-Apps: Leisten und Vollbild-Ansichten tragen ein Farbband unter sich, das den Streifen füllt. Es wird nichts gemessen oder verschoben.
 - **Update-Hinweis**: Gibt es eine neue Version, erscheint oben „Neue Melody-Version ist da – Jetzt laden“.
 - Kein „Hängenbleiben“ von Hervorhebungen auf Touch-Bildschirmen, dafür eine kurze Rückmeldung beim Antippen. Der Erkennen-Knopf weicht beim Scrollen aus.

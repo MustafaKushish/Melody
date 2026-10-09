@@ -113,6 +113,9 @@ class Player extends EventTarget {
     this.lookup = () => null; // set by app: id -> track
     this.coverUrl = () => null; // set by app: track -> object URL
     this.settings = loadSettings();
+    // iPhone/iPad: music never runs through Web Audio. iOS stops it in the background, mutes streams from
+    // other sites, and a stalled AudioContext repeats the last second ("broken tape"). Plain <audio> is reliable.
+    if (isIOS) this.settings.fx = false;
     this.decks = [this.makeDeck(), this.makeDeck()];
     this.radioEl.volume = this.settings.volume;
     for (const ev of ['play', 'pause', 'waiting', 'playing']) this.radioEl.addEventListener(ev, () => this.emit('state'));
@@ -216,7 +219,7 @@ class Player extends EventTarget {
   // Features like Mitsingen or Party switch the effects on for a while; afterwards the previous state returns.
   borrowFx() {
     const had = this.settings.fx;
-    if (!had) this.setFx(true);
+    if (!had && !isIOS) this.setFx(true);
     return had;
   }
   returnFx(had) {
@@ -280,7 +283,7 @@ class Player extends EventTarget {
   // ---------- Audio graph ----------
   // decks → mix → [vocal remover] → 10-band EQ → DJ filter → dry/echo/reverb → stereo width → master → analyser
   initGraph() {
-    if (this.ctx || !this.settings.fx || (isIOS && (document.hidden || this.graphHold)) || foreign(this.track)) return;
+    if (isIOS || this.ctx || !this.settings.fx || foreign(this.track)) return;
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     const ctx = (this.ctx = new AC());
@@ -415,11 +418,12 @@ class Player extends EventTarget {
   setEqOn(on) {
     this.settings.eqOn = on;
     this.saveSettings();
-    if (on) this.setFx(true);
+    if (on && !isIOS) this.setFx(true);
     this.applyEq();
   }
 
   setFx(on) {
+    if (on && isIOS) { this.emit('error', 'Klangeffekte gibt es auf iPhone und iPad nicht – so läuft die Musik zuverlässig, auch im Hintergrund.'); return; }
     this.settings.fx = on;
     this.saveSettings();
     if (on) {
@@ -448,7 +452,7 @@ class Player extends EventTarget {
     this.settings.preset = name;
     this.settings.eqOn = true;
     this.saveSettings();
-    this.setFx(true);
+    if (!isIOS) this.setFx(true);
     this.applyEq();
     this.applyDj();
     this.emit('sound');
@@ -524,6 +528,7 @@ class Player extends EventTarget {
 
   // ---------- Microphone (sing along) ----------
   async enableMic() {
+    if (isIOS) throw new Error('Das Mikrofon mit Hall gibt es auf iPhone und iPad nicht.');
     this.setFx(true);
     if (!this.ctx) throw new Error('Audio-Effekte werden auf diesem Gerät nicht unterstützt.');
     if (this.mic) return;
@@ -660,7 +665,8 @@ class Player extends EventTarget {
 
   checkCrossfade() {
     const cf = this.settings.dj.crossfade;
-    if (!cf || this.fading || this.mode !== 'library' || this.repeat === 'one' || this.sleepAtEnd || this.el.paused) return;
+    // iOS ignores the volume of media elements, so a crossfade would play two songs at full volume.
+    if (!cf || isIOS || this.fading || this.mode !== 'library' || this.repeat === 'one' || this.sleepAtEnd || this.el.paused) return;
     const d = this.el.duration;
     if (!isFinite(d) || d < cf * 2 + 2 || d - this.el.currentTime > cf) return;
     let next = this.index + 1;

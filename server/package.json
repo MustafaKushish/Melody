@@ -1,6 +1,6 @@
 {
   "name": "melody-server",
-  "version": "3.2.1",
+  "version": "3.3.0",
   "private": true,
   "type": "module",
   "description": "Melody: Konten, Abos, Gutscheine, KI-Empfehlungen und Lyrics",

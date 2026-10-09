@@ -1,7 +1,7 @@
 // Lyrics (synced LRC or plain), the lyrics panel in the player and the full-screen sing-along mode.
 import { api } from './api.js';
 import { db } from './db.js';
-import { player } from './player.js';
+import { player, isIOS } from './player.js';
 import { icon, hydrateIcons, setIcon } from './icons.js';
 import { $, esc, toast, getTrack, openSheet, closeSheet, hue, setRangeP, state } from './core.js';
 
@@ -179,15 +179,15 @@ export async function renderSing() {
       <button class="icon-btn lg" data-action="next" aria-label="Weiter">${icon('next')}</button>
     </div>
     <div class="sing-tools">
-      <label class="sing-slider"><span>${icon('person')} Originalstimme <b id="sing-vocal-val">${sing.vocals} %</b></span>
+      ${isIOS ? '' : `<label class="sing-slider"><span>${icon('person')} Originalstimme <b id="sing-vocal-val">${sing.vocals} %</b></span>
         <input type="range" id="sing-vocals" min="0" max="100" step="5" value="${sing.vocals}"></label>
-      <button class="chip${player.mic ? ' on' : ''}" data-action="sing-mic">${icon('mic')}<span>${player.mic ? 'Mikro an' : 'Mikrofon'}</span></button>
+      <button class="chip${player.mic ? ' on' : ''}" data-action="sing-mic">${icon('mic')}<span>${player.mic ? 'Mikro an' : 'Mikrofon'}</span></button>`}
       <div class="mic-meter" ${player.mic ? '' : 'hidden'}><i id="mic-level"></i></div>
       <div class="sing-score" id="sing-score">${player.mic ? 'Sing los! 🎤' : ''}</div>
     </div>
     <p class="muted small center">Tipp: Kopfhörer auf, Originalstimme runter – und du bist der Star.${player.analyser ? '' : ' Die Stimmentfernung braucht aktivierte Audio-Effekte.'}</p>`;
   hydrateIcons(el);
-  setRangeP($('#sing-vocals'));
+  if ($('#sing-vocals')) setRangeP($('#sing-vocals'));
   const p = await ensureLyrics(t);
   if (!sing.open || el.dataset.id !== t.id) return;
   const stage = $('#sing-stage');

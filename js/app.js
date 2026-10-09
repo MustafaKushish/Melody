@@ -27,7 +27,7 @@ import {
   coverUrl, coverHTML, groupCover, setRangeP, openSheet, closeSheet, promptSheet, confirmSheet,
 } from './core.js';
 
-const VERSION = '3.2.1';
+const VERSION = '3.3.0';
 
 const UI_KEY = 'melody.ui';
 const ui = (() => {
@@ -154,6 +154,7 @@ const VIEWS = {
   shared: viewShared,
 };
 
+let lastViewKey = '';
 function render() {
   parseRoute();
   const { view } = state.route;
@@ -162,6 +163,9 @@ function render() {
   const main = $('#main');
   main.innerHTML = fn();
   hydrateIcons(main);
+  // A new page fades in; re-renders of the same page (e.g. after a like) stay still.
+  const key = `${view}/${state.route.param}`;
+  if (key !== lastViewKey) { main.classList.remove('view-enter'); void main.offsetWidth; main.classList.add('view-enter'); lastViewKey = key; }
   const fab = $('#rc-fab');
   if (fab) { fab.hidden = view === 'recognize'; fab.classList.remove('away'); }
   const navView = { album: 'library', artist: 'library', playlist: 'playlists', premium: 'account', shared: 'playlists', podcast: 'podcasts' }[view] || view;
@@ -583,7 +587,7 @@ function viewSettings() {
       <p class="muted" style="font-size:13px;margin:8px 0 0">Playlists und Warteschlange lassen sich am Griff ${icon('drag')} verschieben – mit Maus, Finger oder Pfeiltasten. Auf dem Handy wischst du über den Mini-Player zum nächsten Lied. Taste <b>?</b> zeigt alle Tastenkürzel.</p>
     </div>
     <div class="panel"><h3>Wiedergabe</h3>
-      <div class="setting"><div><div>Audio-Effekte</div><div class="muted" style="font-size:13px">Equalizer & Visualizer${isIOS ? '. Hinweis: Auf iOS stoppt die Musik damit bei gesperrtem Bildschirm.' : ''}</div></div>
+      <div class="setting"${isIOS ? ' hidden' : ''}><div><div>Audio-Effekte</div><div class="muted" style="font-size:13px">Equalizer & Visualizer</div></div>
         <label class="switch"><input type="checkbox" data-setting="fx" ${s.fx ? 'checked' : ''}><span></span></label></div>
       <div class="setting"><span>Geschwindigkeit</span><select class="input" data-setting="rate">
         ${[0.5, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2].map((r) => `<option value="${r}"${s.rate === r ? ' selected' : ''}>${String(r).replace('.', ',')}×</option>`).join('')}
@@ -899,6 +903,7 @@ function updatePodcastUI() {
 
 function updateState() {
   const playing = player.playing;
+  $('#now-playing').classList.toggle('is-playing', playing); // paused: the cover steps back a little
   for (const id of ['#pb-play', '#np-play']) {
     const b = $(id);
     setIcon(b, playing ? 'pause' : 'play');
@@ -946,14 +951,29 @@ function markCurrent() {
   document.querySelectorAll('.track[data-id]').forEach((el) => el.classList.toggle('current', el.dataset.id === id));
 }
 
+// The full-screen player slides up like a sheet and back down when closed.
+let npTimer = 0;
 function openNowPlaying() {
   if ($('#player-bar').hidden) return;
-  $('#now-playing').hidden = false;
+  const np = $('#now-playing');
+  clearTimeout(npTimer);
+  np.classList.remove('np-closing');
+  np.style.transform = '';
+  np.hidden = false;
+  void np.offsetWidth; // start from the closed position, then animate
+  np.classList.add('np-shown');
   startViz();
   onNowPlayingOpen();
 }
 function closeNowPlaying() {
-  $('#now-playing').hidden = true;
+  const np = $('#now-playing');
+  if (np.hidden) return;
+  if (!np.classList.contains('np-shown')) { np.hidden = true; return; }
+  np.classList.remove('np-shown');
+  np.classList.add('np-closing');
+  np.style.transform = '';
+  clearTimeout(npTimer);
+  npTimer = setTimeout(() => { np.hidden = true; np.classList.remove('np-closing'); }, 320);
 }
 
 // Visualizer: frequency bars drawn while the now-playing screen is open.
