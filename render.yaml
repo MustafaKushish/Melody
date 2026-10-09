@@ -1,0 +1,25 @@
+# Melody auf Render (https://render.com) – mit einem Klick online:
+#   https://render.com/deploy?repo=https://github.com/MustafaKushish/Melody
+# Kostenloser Plan zum Testen: Der Server schläft nach 15 Minuten ohne Besucher ein (Aufwachen dauert
+# bis zu einer Minute) und vergisst dabei Konten und Gutscheine. Für den echten Betrieb: Plan „Starter“
+# plus Disk und MELODY_DB auf die Disk legen (siehe README).
+services:
+  - type: web
+    name: melody
+    runtime: node
+    plan: free
+    buildCommand: cd server && npm ci --omit=dev
+    startCommand: cd server && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      # Zahlungen im Testmodus (kein echtes Geld), bis Stripe eingerichtet ist
+      - key: MELODY_DEMO_PAYMENTS
+        value: "1"
+      - key: TRUST_PROXY
+        value: "1"
+      - key: MELODY_ADMIN_TOKEN
+        generateValue: true

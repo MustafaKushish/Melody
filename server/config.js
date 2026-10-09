@@ -71,7 +71,8 @@ export const AI_MODEL = process.env.MELODY_AI_MODEL || 'claude-opus-5-5';
 export const AI_DAILY_LIMIT = Number(process.env.MELODY_AI_DAILY_LIMIT || 5);
 
 export const PORT = Number(process.env.PORT || 8080);
-export const PUBLIC_URL = (process.env.PUBLIC_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+// On Render the public address is provided automatically (RENDER_EXTERNAL_URL).
+export const PUBLIC_URL = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
 export const DB_PATH = process.env.MELODY_DB || new URL('./data/melody.db', import.meta.url).pathname;
 
 export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';

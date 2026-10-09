@@ -56,6 +56,7 @@ async function tryWorld(pcm) {
   try {
     const res = await fetch('api/recognize', { method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: wav(pcm), credentials: 'same-origin' });
     const data = await res.json().catch(() => ({}));
+    if (res.status === 503) return { error: data.error || 'Die weltweite Erkennung ist noch nicht eingerichtet.', noServer: true };
     if (!res.ok) return { error: data.error || 'Erkennung nicht erreichbar.' };
     return data.found ? { source: 'world', ...data } : null;
   } catch {
