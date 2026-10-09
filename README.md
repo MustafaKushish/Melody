@@ -207,6 +207,17 @@ npm start             # zum Ausprobieren direkt starten
 
 ## 🌍 Online stellen
 
+### Schnellstart: kostenlos testen auf Render (ein Klick)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/MustafaKushish/Melody)
+
+1. Auf den Knopf klicken und mit dem GitHub-Konto bei Render anmelden.
+2. „Deploy Blueprint“ bestätigen. Render liest `render.yaml`, baut den Server und startet ihn (3–5 Minuten).
+3. Die Adresse `https://melody-….onrender.com` auf dem Handy in Safari/Chrome öffnen, Konto anlegen, zum Home-Bildschirm hinzufügen.
+
+Der kostenlose Plan ist zum Testen gedacht: Nach 15 Minuten ohne Besucher schläft der Server ein, das Aufwachen dauert bis zu einer Minute, und dabei gehen Konten und Gutscheine verloren (die Musik-Bibliothek liegt auf dem Gerät und bleibt). Zahlungen laufen im Testmodus. Optional unter „Environment“ ergänzen: `AUDD_API_TOKEN` (weltweite Song-Erkennung), `ANTHROPIC_API_KEY` (KI-Mix). Für den echten Betrieb: Plan „Starter“ mit Disk, `MELODY_DB=/var/data/melody.db` und Stripe-Schlüssel.
+
+### Dauerhaft betreiben
+
 Melody braucht jetzt einen kleinen Node-Server, weil Konten und Zahlungen dort verwaltet werden. GitHub Pages reicht deshalb nicht mehr. Passende Anbieter sind zum Beispiel:
 
 - **Render**, **Railway** oder **Fly.io** (einfach, ab ca. 5 €/Monat)
