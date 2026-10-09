@@ -7,6 +7,7 @@ import { loadCatalog, ensureTrack, catalogId, playable } from './catalog.js';
 import { podIndex, podCover, searchPods } from './podcasts.js';
 import { parseLRC } from './lyrics.js';
 import { MOODS } from './foryou.js';
+import { searchInto as audiusSearch } from './audius.js';
 
 const RECENT_KEY = 'melody.searches';
 const S = { q: '', catalogLyrics: null, timer: 0 };
@@ -125,7 +126,7 @@ function section(title, body, more = '') {
 function resultsHTML(res, q) {
   if (!res) return browseHTML();
   if (!res.total) {
-    return `<div class="empty">${icon('search')}<p>Nichts gefunden für „${esc(q)}“.</p></div>${externalHTML(q)}`;
+    return `<div class="empty sr-none">${icon('search')}<p>Nichts gefunden für „${esc(q)}“.</p></div>${externalHTML(q)}`;
   }
   const top = res.tracks.slice(0, 6).map((x) => x.t);
   const tracksHTML = top.length ? hooks.trackRows(top) : '';
@@ -234,7 +235,8 @@ async function update() {
     const [cat, lyr] = await Promise.all([loadCatalog().catch(() => []), loadCatalogLyrics().catch(() => new Map())]);
     if (S.q.trim() !== q || !$('#sr-results')) return;
     lastRes = searchAll(q, cat, lyr);
-    box.innerHTML = resultsHTML(lastRes, q);
+    box.innerHTML = resultsHTML(lastRes, q) + '<div id="sr-audius"></div>';
+    audiusSearch(q, $('#sr-audius'));
   }
   hydrateIcons(box);
 }

@@ -39,7 +39,8 @@ async function run(stores, mode, fn) {
 export const db = {
   all: (store) => run(store, 'readonly', (tx) => tx.objectStore(store).getAll()),
   get: (store, key) => run(store, 'readonly', (tx) => tx.objectStore(store).get(key)),
-  put: (store, value, key) => run(store, 'readwrite', (tx) => tx.objectStore(store).put(value, key)),
+  // Streamed songs that were only played (temp) stay out of the library until they are kept on purpose.
+  put: (store, value, key) => (store === 'tracks' && value?.temp ? Promise.resolve() : run(store, 'readwrite', (tx) => tx.objectStore(store).put(value, key))),
   del: (store, key) => run(store, 'readwrite', (tx) => tx.objectStore(store).delete(key)),
   clear: (store) => run(store, 'readwrite', (tx) => tx.objectStore(store).clear()),
   addTrack: (track, blob) =>

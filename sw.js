@@ -1,11 +1,11 @@
 // Offline support: the app shell is cached; everything else (radio API, streams) goes to the network.
-const CACHE = 'melody-v11';
+const CACHE = 'melody-v12';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/style.css',
   'js/app.js', 'js/db.js', 'js/icons.js', 'js/player.js', 'js/tags.js',
   'js/core.js', 'js/api.js', 'js/account.js', 'js/lyrics.js', 'js/foryou.js', 'js/studio.js',
   'js/catalog.js', 'js/share.js', 'js/demo-api.js', 'js/drive.js', 'js/party.js', 'js/fitness.js', 'js/recognize.js', 'js/fingerprint.js', 'js/bpm.js', 'js/podcasts.js',
-  'js/search.js', 'js/recap.js', 'js/connect.js', 'js/kids.js', 'js/a11y.js', 'js/meta.js',
+  'js/search.js', 'js/recap.js', 'js/connect.js', 'js/kids.js', 'js/a11y.js', 'js/meta.js', 'js/audius.js',
   'catalog/fingerprints.json',
   'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',

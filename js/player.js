@@ -1051,7 +1051,7 @@ class Player extends EventTarget {
     const cover = this.coverUrl(t);
     navigator.mediaSession.metadata = new MediaMetadata({
       title: t.title, artist: t.artist, album: t.album,
-      artwork: cover ? [{ src: cover, sizes: '512x512', type: t.cover.type || 'image/jpeg' }] : fallback,
+      artwork: cover ? [{ src: cover, sizes: '512x512', type: t.cover?.type || 'image/jpeg' }] : fallback,
     });
   }
 

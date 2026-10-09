@@ -5,6 +5,7 @@ import { icon, hydrateIcons } from './icons.js';
 import { $, esc, toast, state, hooks, openSheet, closeSheet, fmt, setRangeP } from './core.js';
 import { loadCatalog, ensureTrack, playable } from './catalog.js';
 import { playEp } from './podcasts.js';
+import { trackById as audiusTrack } from './audius.js';
 
 const C = { es: null, devices: [], me: null, remote: null, lastFrom: 0, sendTimer: 0, lastSent: 0 };
 
@@ -40,6 +41,7 @@ function currentItem() {
   if (player.mode === 'radio' && player.station) return { kind: 'radio', station: player.station };
   const t = player.track;
   if (!t) return null;
+  if (t.source === 'audius') return { kind: 'audius', id: t.audiusId };
   return t.catalogId ? { kind: 'catalog', id: t.catalogId } : { kind: 'local', title: t.title, artist: t.artist };
 }
 
@@ -113,6 +115,12 @@ async function playItem(item, position = 0) {
   if (item.kind === 'local') {
     const t = state.tracks.find((x) => x.title === item.title && x.artist === item.artist);
     if (!t) { toast(`„${item.title}“ ist auf diesem Gerät nicht vorhanden.`); return false; }
+    await player.playList([t.id], 0, position);
+    return true;
+  }
+  if (item.kind === 'audius') {
+    const t = state.map.get('aud:' + item.id) || (await audiusTrack(item.id).catch(() => null));
+    if (!t) { toast('Dieser Audius-Song ist gerade nicht erreichbar.'); return false; }
     await player.playList([t.id], 0, position);
     return true;
   }

@@ -6,6 +6,8 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 
 ## ✨ Funktionen
 
+> **Neu in Melody 3.2:** Freie Musik von Audius – tausende Songs kostenlos streamen.
+>
 > **Neu in Melody 3.0:** Suche über alles (auch Liedtexte), Melody-Rückblick, Melody Connect (Geräte fernsteuern und Musik mitnehmen), Kinder-Modus mit Eltern-PIN sowie Barrierefreiheit und Ziehen zum Sortieren.
 
 ### 🎤 Mitsingen
@@ -63,6 +65,13 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 - **Hörbücher**: Viele Hörbücher erscheinen als Podcast-Feed, z. B. gemeinfreie Klassiker von LibriVox. Sie laufen mit denselben Funktionen.
 - Sicherheit: Shownotes werden als reiner Text angezeigt (kein eingeschleuster Code). Der Server lädt Feeds nur von öffentlichen Adressen (SSRF-Schutz).
 - Demo-Podcast **„Melody Insider“** mit 3 Folgen (zwei Moderatoren, synthetische Stimmen) unter `podcasts/`.
+
+### 🌍 Freie Musik (Audius)
+- **Tausende Songs unabhängiger Künstler:innen**, kostenlos und werbefrei gestreamt über [Audius](https://audius.co), ein offenes Musik-Netzwerk. Kein Konto und kein Server nötig – funktioniert auch in der Handy-Version auf GitHub Pages und im Windows-Programm.
+- Seite **„Freie Musik“**: Trends der Woche, des Monats, des Jahres oder aller Zeiten, 17 Genres (Electronic, Hip-Hop, Pop, R&B, Lo-Fi, House, Latin, Weltmusik, Jazz, Klassik …) und eine eigene Suche. Dazu eine Reihe „angesagt auf Audius“ auf der Startseite und Audius-Treffer in der normalen Suche.
+- Audius-Songs laufen wie alle anderen: Vollbild-Player mit Cover, Lyrics und Mitsingen, Warteschlange, Melody Connect (zwischen Geräten weitergeben), Playlists teilen.
+- Nur Gehörtes bleibt aus der Bibliothek. **Liken, zu einer Playlist hinzufügen oder herunterladen** übernimmt den Song in die Bibliothek. „Bei Audius öffnen“ führt zur Künstlerseite.
+- Nur frei streambare Songs werden gezeigt (keine kostenpflichtigen oder gesperrten). Schnittstelle: `https://api.audius.co/v1` mit `app_name=Melody`.
 
 ### 🔎 Suche über alles
 - **Ein Suchfeld für alles**: Songs, Künstler, Alben, Playlists, Podcasts und Folgen, Radiosender und **Liedtexte**. „Wie heißt das Lied mit … ?“ findet den Song über eine Textzeile und spielt **ab genau dieser Zeile**.
@@ -299,6 +308,8 @@ js/recap.js                Melody-Rückblick (Hörstatistik, Story, Bild zum Tei
 js/connect.js              Melody Connect: Geräte sehen, fernsteuern, Musik mitnehmen
 js/kids.js                 Kinder-Modus mit Eltern-PIN, Zeitlimit, Gehörschutz
 js/a11y.js                 Barrierefreiheit, Ansagen, Ziehen zum Sortieren, Wischgesten
+js/audius.js               Freie Musik von Audius (Trends, Genres, Suche, Streaming)
+js/meta.js                 Infos & Cover (Foto, Online-Suche über MusicBrainz)
 desktop/                   Windows-Programm (Electron, Setup.exe)
 legal/                     Impressum, AGB, Datenschutz, Widerruf (Vorlagen)
 server/config.js           ★ Preise, Testphase, KI-Limit

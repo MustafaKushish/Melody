@@ -8,7 +8,20 @@ let catalog = null;
 
 export const catalogId = (id) => 'cat:' + id;
 export const isCatalog = (t) => t?.source === 'catalog';
-export const isOffline = (t) => !isCatalog(t) || !!t.downloaded;
+// Songs that come over the internet: the Melody catalog and Audius.
+export const isStream = (t) => t?.source === 'catalog' || t?.source === 'audius';
+export const isOffline = (t) => !isStream(t) || !!t.downloaded;
+
+// A streamed song that was only played becomes part of the library (liked, added to a playlist, downloaded).
+export async function keepTrack(t) {
+  if (!t?.temp) return t;
+  delete t.temp;
+  t.addedAt = Date.now();
+  if (!state.tracks.includes(t)) state.tracks.push(t);
+  state.map.set(t.id, t);
+  await db.put('tracks', t);
+  return t;
+}
 export const playable = (t) => isOffline(t) || navigator.onLine;
 
 export async function loadCatalog() {
@@ -85,7 +98,7 @@ async function downloadOne(t, onProgress) {
 }
 
 export async function download(tracks) {
-  const todo = tracks.filter((t) => isCatalog(t) && !t.downloaded && !active.has(t.id));
+  const todo = tracks.filter((t) => isStream(t) && !t.downloaded && !active.has(t.id));
   if (!todo.length) {
     toast(tracks.length > 1 ? 'Schon alles offline verfügbar' : 'Schon heruntergeladen');
     return;
@@ -99,6 +112,7 @@ export async function download(tracks) {
   for (const [i, t] of todo.entries()) {
     active.set(t.id, 0);
     try {
+      await keepTrack(t);
       await downloadOne(t, (p) => {
         active.set(t.id, p);
         toast(`Lade herunter ${todo.length > 1 ? `${i + 1}/${todo.length} ` : ''}· ${esc(t.title)} ${Math.round(p * 100)} %`, true);
@@ -118,7 +132,7 @@ export async function download(tracks) {
 }
 
 export async function removeDownload(t) {
-  if (!isCatalog(t) || !t.downloaded) return;
+  if (!isStream(t) || !t.downloaded) return;
   await db.del('files', t.id);
   t.downloaded = false;
   await db.put('tracks', t);
@@ -127,14 +141,14 @@ export async function removeDownload(t) {
 }
 
 export function downloadedBytes() {
-  return state.tracks.filter((t) => isCatalog(t) && t.downloaded).reduce((s, t) => s + (t.size || 0), 0);
+  return state.tracks.filter((t) => isStream(t) && t.downloaded).reduce((s, t) => s + (t.size || 0), 0);
 }
 
 export const mb = (b) => (b / 1048576).toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' MB';
 
 // Small status icon in track rows.
 export function statusBadge(t) {
-  if (!isCatalog(t)) return '';
+  if (!isStream(t)) return '';
   if (active.has(t.id)) return `<span class="dl-badge busy" title="Wird geladen">${Math.round(active.get(t.id) * 100)}%</span>`;
   return t.downloaded
     ? `<span class="dl-badge ok" title="Offline verfügbar">${icon('downloadDone')}</span>`

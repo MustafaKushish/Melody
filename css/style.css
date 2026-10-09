@@ -1418,3 +1418,22 @@ button, .track, .card, .chip, .nav-item { touch-action: manipulation; }
 .update-bar > .ico { color: var(--accent); }
 .update-bar .btn { padding: 8px 14px; }
 @media (max-width: 800px) { .sheet { box-shadow: var(--shadow), 0 120px 0 0 var(--bg-2); } }
+
+/* Freie Musik (Audius) */
+.aud-hero { margin-bottom: 14px; }
+.aud-hero .kind { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); }
+.aud-hero .kind .ico { width: 16px; height: 16px; }
+.aud-hero .search { max-width: 560px; }
+.aud-genres, .aud-times { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-bottom: 8px; padding-bottom: 2px; }
+.aud-genres::-webkit-scrollbar, .aud-times::-webkit-scrollbar { display: none; }
+.aud-genres .chip, .aud-times .chip { flex: none; }
+.aud-times .chip { font-size: 12px; padding: 5px 12px; }
+.aud-loading { display: flex; flex-direction: column; gap: 8px; padding: 6px 0; }
+.aud-skel { height: 52px; border-radius: 10px; background: linear-gradient(90deg, var(--surface) 0%, var(--surface-2) 50%, var(--surface) 100%); background-size: 200% 100%; animation: aud-shimmer 1.2s infinite linear; }
+.aud-loading.small .aud-skel { height: 44px; }
+@keyframes aud-shimmer { to { background-position: -200% 0; } }
+.aud-note { display: flex; gap: 10px; align-items: flex-start; margin: 22px 0 8px; padding: 12px 14px; border-radius: 12px; background: var(--surface); color: var(--text-2); font-size: 13px; }
+.aud-note .ico { flex: none; width: 20px; height: 20px; color: var(--accent); }
+.aud-note a { color: var(--text); }
+.home-audius:empty { display: none; }
+#sr-audius:empty { display: none; }

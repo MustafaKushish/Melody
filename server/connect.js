@@ -71,6 +71,7 @@ function sanitizeState(s) {
   if (s.item && typeof s.item === 'object') {
     const k = s.item.kind;
     if (k === 'catalog') item = { kind: k, id: clean(s.item.id, 80) };
+    else if (k === 'audius') item = { kind: k, id: clean(s.item.id, 40) };
     else if (k === 'local') item = { kind: k, title: clean(s.item.title, 150), artist: clean(s.item.artist, 100) };
     else if (k === 'podcast') item = { kind: k, feed: clean(s.item.feed, 500), guid: clean(s.item.guid, 300) };
     else if (k === 'radio') item = { kind: k, station: { id: clean(s.item.station?.id, 80), name: clean(s.item.station?.name, 120), url: clean(s.item.station?.url, 500), favicon: clean(s.item.station?.favicon, 500), tags: clean(s.item.station?.tags, 120) } };

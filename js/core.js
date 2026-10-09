@@ -60,7 +60,8 @@ export function go(view, param = '') {
 }
 
 export function coverUrl(t) {
-  if (!t || !t.cover) return null;
+  if (!t) return null;
+  if (!t.cover) return t.artwork || null; // streamed songs (Audius) bring a cover URL
   let u = state.covers.get(t.id);
   if (!u) {
     u = URL.createObjectURL(t.cover);

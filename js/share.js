@@ -3,6 +3,7 @@
 import { icon, hydrateIcons } from './icons.js';
 import { $, esc, toast, state, hooks, getTrack, plural, groupCover, openSheet, coverHTML } from './core.js';
 import { isCatalog, loadCatalog, ensureTracks, catalogId, catalogEntry } from './catalog.js';
+import { stub as audiusStub } from './audius.js';
 
 const b64url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const fromB64url = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
@@ -17,7 +18,7 @@ export async function encodePlaylist(p) {
     v: 1,
     n: p.name,
     by: state.account?.name || '',
-    t: tracks.map((t) => (isCatalog(t) ? ['c', t.catalogId] : ['l', t.title, t.artist])),
+    t: tracks.map((t) => (isCatalog(t) ? ['c', t.catalogId] : t.source === 'audius' ? ['a', t.audiusId, t.title, t.artist] : ['l', t.title, t.artist])),
   };
   const raw = new TextEncoder().encode(JSON.stringify(data));
   if (typeof CompressionStream !== 'undefined') {
@@ -40,7 +41,7 @@ export async function sharePlaylist(p) {
   if (!p.trackIds.length) { toast('Die Playlist ist noch leer.'); return; }
   const url = shareUrl(await encodePlaylist(p));
   const text = `Hör dir meine Playlist „${p.name}“ auf Melody an 🎵`;
-  const own = p.trackIds.map(getTrack).filter((t) => t && !isCatalog(t)).length;
+  const own = p.trackIds.map(getTrack).filter((t) => t && !isCatalog(t) && t.source !== 'audius').length;
   openSheet(`<div class="share-sheet">
     ${groupCover(p.trackIds.map(getTrack).filter(Boolean), 'lg', p.name, 'playlist')}
     <h3>„${esc(p.name)}“ teilen</h3>
@@ -65,6 +66,7 @@ function resolve(data) {
       const c = catalogEntry(e[1]);
       return { kind: 'catalog', id: e[1], t: getTrack(catalogId(e[1])), title: c?.title || 'Unbekannter Titel', artist: c?.artist || '', cover: c?.cover };
     }
+    if (e[0] === 'a') return { kind: 'audius', title: e[2], artist: e[3], t: getTrack('aud:' + e[1]) || audiusStub(e[1], e[2], e[3]) };
     const t = byKey.get(`${e[1]}\u0001${e[2]}`.toLowerCase());
     return { kind: 'local', title: e[1], artist: e[2], t };
   });
@@ -95,7 +97,7 @@ export function viewShared() {
       <span class="num">${i + 1}</span>
       ${t ? coverHTML(t, 'sm') : x.cover ? `<div class="cover sm"><img src="catalog/${esc(x.cover)}" alt=""></div>` : coverHTML(null, 'sm', title)}
       <div class="meta"><div class="t">${esc(title)}</div><div class="a">${esc(artist)}${avail ? '' : ' · nicht in deiner Bibliothek'}</div></div>
-      <span class="dur">${x.kind === 'catalog' ? icon('cloud') : avail ? icon('check') : ''}</span><span></span></div>`;
+      <span class="dur">${x.kind === 'catalog' || x.kind === 'audius' ? icon('cloud') : avail ? icon('check') : ''}</span><span></span></div>`;
   }).join('');
   const firstCover = items.find((x) => x.cover && !x.t?.cover)?.cover;
   const heroCover = items.some((x) => x.t?.cover) || !firstCover

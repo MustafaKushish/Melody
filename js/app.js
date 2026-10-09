@@ -5,7 +5,7 @@ import { icon, hydrateIcons, setIcon } from './icons.js';
 import { ensureAccess, renderAccountChip, viewPremium, viewAccount, afterAccountRender, accountActions, accountForms } from './account.js';
 import { lyricsActions, lyricsForms, onLyricsInput, onTrackChange, updateSingState, onNowPlayingOpen, closeSing, isSingOpen, attachLrcFiles, editLyricsSheet, openSing } from './lyrics.js';
 import { viewForYou, forYouActions, forYouForms, MOODS } from './foryou.js';
-import { viewDiscover, catalogActions, loadCatalog, statusBadge, isCatalog, playable, download, removeDownload, downloadedBytes, mb, catalogCards } from './catalog.js';
+import { viewDiscover, catalogActions, loadCatalog, statusBadge, isCatalog, isStream, keepTrack, playable, download, removeDownload, downloadedBytes, mb, catalogCards } from './catalog.js';
 import { viewShared, shareActions } from './share.js';
 import { driveActions, driveForms, closeDrive, isDriveOpen } from './drive.js';
 import { partyActions, closeParty, isPartyOpen } from './party.js';
@@ -17,6 +17,7 @@ import { startConnect, stopConnect, connectActions, onConnectInput, onConnectCha
 import { viewSearch, afterSearchRender, onSearchInput, openSearch, searchActions, searchForms } from './search.js';
 import { viewPodcasts, viewPodcast, podcastActions, podcastForms, homeSection as podHome, refreshSubscriptions, fmtTime as podTime } from './podcasts.js';
 import { DEMO } from './api.js';
+import { viewAudius, afterAudiusRender, audiusActions, audiusForms, onAudiusInput, homeSection as audiusHome, fillHome as fillAudiusHome } from './audius.js';
 import { editTrackSheet, metaActions, metaForms, onMetaChange } from './meta.js';
 import { a11y, applyA11y, setA11y, TEXT_SIZES, trapTab, dragKey, registerSorter } from './a11y.js';
 import { kidsActions, kidsForms, kidsActive, kidsAllows, kidsKey, onKidsInput, initKids, refreshKids } from './kids.js';
@@ -26,7 +27,7 @@ import {
   coverUrl, coverHTML, groupCover, setRangeP, openSheet, closeSheet, promptSheet, confirmSheet,
 } from './core.js';
 
-const VERSION = '3.1.3';
+const VERSION = '3.2.0';
 
 const UI_KEY = 'melody.ui';
 const ui = (() => {
@@ -95,6 +96,7 @@ const NAV = [
   { id: 'home', label: 'Start', icon: 'home', mobile: true },
   { id: 'search', label: 'Suchen', icon: 'search', mobile: true },
   { id: 'discover', label: 'Entdecken', icon: 'explore' },
+  { id: 'audius', label: 'Freie Musik', icon: 'globe' },
   { id: 'podcasts', label: 'Podcasts', icon: 'podcast', mobile: true },
   { id: 'foryou', label: 'Für dich', icon: 'sparkle' },
   { id: 'library', label: 'Bibliothek', icon: 'library', mobile: true },
@@ -130,6 +132,7 @@ function parseRoute() {
 
 const VIEWS = {
   home: viewHome,
+  audius: viewAudius,
   library: viewLibrary,
   album: viewAlbum,
   artist: viewArtist,
@@ -186,6 +189,8 @@ function afterRender(view) {
   if (q.get('mode') === 'fitness') { history.replaceState(null, '', '#/home'); openFitness(); }
   if (view === 'recognize' && q.get('auto') === '1') { history.replaceState(null, '', '#/recognize'); recognizeListen(); }
   if (view === 'home' || (view === 'library' && !state.tracks.length)) fillHomeCatalog();
+  if (view === 'home') fillAudiusHome();
+  if (view === 'audius') afterAudiusRender();
   if (view === 'studio') afterStudioRender();
 }
 
@@ -282,9 +287,11 @@ function viewHome() {
         <button class="btn btn-primary" data-action="import">${icon('upload')}Musik importieren</button>
         <button class="btn hide-sm" data-action="import-folder">${icon('folder')}Ordner importieren</button>
         <button class="btn" data-action="nav" data-view="discover">${icon('explore')}Songs entdecken</button>
+        <button class="btn" data-action="nav" data-view="audius">${icon('globe')}Freie Musik hören</button>
       </div>
       ${DEMO ? '<p class="demo-note" style="margin-top:16px">Demo-Version: Tippe auf „Songs entdecken“ und spiele die Melody-Songs ab – mit Lyrics zum Mitsingen. Du kannst auch eigene Musikdateien importieren.</p>' : ''}
       <div id="home-catalog"></div>
+      ${audiusHome()}
       ${podHome()}
       ${MODES_HTML()}
       <div class="features">
@@ -321,6 +328,7 @@ function viewHome() {
       <div class="tabs">${Object.entries(MOODS).slice(0, 6).map(([name, m]) => `<button class="chip" data-action="ai-mood" data-mood="${name}">${m.emoji} ${name}</button>`).join('')}</div>
     </section>
     <div id="home-catalog"></div>
+    ${audiusHome()}
     ${homeTeaser()}
     ${podHome()}
     <h2>Smart-Mixe</h2>
@@ -372,7 +380,7 @@ function libraryList() {
   let list = state.tracks.filter((t) => matches(t, q));
   if (tab === 'favs') list = list.filter((t) => t.favorite);
   if (tab === 'offline') {
-    list = list.filter((t) => !isCatalog(t) || t.downloaded);
+    list = list.filter((t) => !isStream(t) || t.downloaded);
     const dl = downloadedBytes();
     return `<p class="muted small offline-note">${icon('downloadDone')} ${plural(list.length, 'Titel', 'Titel')} ohne Internet hörbar · eigene Dateien sind immer offline${dl ? ` · Downloads: ${mb(dl)}` : ''}</p>` +
       trackRows(sortedTracks(list), { empty: 'Noch nichts offline. Lade Songs unter „Entdecken“ herunter.' });
@@ -631,14 +639,14 @@ function trackMenu(id, playlistId, index) {
     ${item('m-queue', 'queue', 'Zur Warteschlange hinzufügen')}
     ${item('m-sing', 'mic', 'Mitsingen')}
     ${item('m-add-pl', 'add', 'Zu Playlist hinzufügen')}
-    ${isCatalog(t) ? item('dl-track', t.downloaded ? 'delete' : 'download', t.downloaded ? 'Download entfernen' : 'Herunterladen (offline hören)') : ''}
+    ${isStream(t) ? item('dl-track', t.downloaded ? 'delete' : 'download', t.downloaded ? 'Download entfernen' : 'Herunterladen (offline hören)') : ''}
     ${item('m-fav', t.favorite ? 'heart' : 'heartOutline', t.favorite ? 'Aus Lieblingssongs entfernen' : 'Zu Lieblingssongs', t.favorite ? 'on' : '')}
-    ${item('m-album', 'album', 'Zum Album')}
+    ${t.source === 'audius' ? (t.permalink ? `<a class="sheet-item" href="${esc(t.permalink)}" target="_blank" rel="noopener">${icon('globe')}Bei Audius öffnen (Künstler unterstützen)</a>` : '') : item('m-album', 'album', 'Zum Album')}
     ${item('m-artist', 'person', 'Zum Künstler')}
     ${item('m-edit', t.cover ? 'edit' : 'image', t.cover ? 'Infos & Cover bearbeiten' : 'Infos & Cover ergänzen')}
     ${item('m-lyrics', 'lyrics', 'Lyrics bearbeiten')}
     ${playlistId ? item('m-remove-pl', 'close', 'Aus dieser Playlist entfernen') : ''}
-    ${item('m-delete', 'delete', isCatalog(t) ? 'Aus Bibliothek entfernen' : 'Vom Gerät löschen', 'danger')}`);
+    ${t.temp ? '' : item('m-delete', 'delete', isStream(t) ? 'Aus Bibliothek entfernen' : 'Vom Gerät löschen', 'danger')}`);
 }
 
 function addToPlaylistSheet(ids) {
@@ -713,13 +721,15 @@ function speedSheet() {
 async function toggleFav(t) {
   if (!t) return;
   t.favorite = !t.favorite;
-  await db.put('tracks', t);
+  if (t.temp) await keepTrack(t);
+  else await db.put('tracks', t);
   toast(t.favorite ? 'Zu Lieblingssongs hinzugefügt' : 'Aus Lieblingssongs entfernt');
   updatePlayerUI();
   rerenderKeepScroll();
 }
 
 async function createPlaylist(name, ids = []) {
+  for (const id of ids) await keepTrack(getTrack(id));
   const p = { id: uid(), name: name.trim(), trackIds: [...ids], createdAt: Date.now() };
   await db.put('playlists', p);
   state.playlists.push(p);
@@ -728,6 +738,7 @@ async function createPlaylist(name, ids = []) {
 
 async function addToPlaylist(p, ids) {
   const fresh = ids.filter((id) => !p.trackIds.includes(id));
+  for (const id of fresh) await keepTrack(getTrack(id));
   p.trackIds.push(...fresh);
   await db.put('playlists', p);
   toast(fresh.length ? `Zu „${p.name}“ hinzugefügt` : 'Bereits in der Playlist');
@@ -842,7 +853,7 @@ function updatePlayerUI() {
     c.classList.add(size);
     c.id = sel.slice(1);
     // Own songs without a picture: offer to add one right on the big cover.
-    if (size === 'xl' && !radio && !t.cover && !isCatalog(t)) c.insertAdjacentHTML('beforeend', `<button class="np-addcover" data-action="edit-current">${icon('image')}Cover hinzufügen</button>`);
+    if (size === 'xl' && !radio && !t.cover && !isStream(t)) c.insertAdjacentHTML('beforeend', `<button class="np-addcover" data-action="edit-current">${icon('image')}Cover hinzufügen</button>`);
     $(sel).replaceWith(c);
   }
   $('#np-bg').style.setProperty('--h', hue(radio ? title : t.album));
@@ -989,7 +1000,7 @@ function listFromVisible() {
   const q = state.libQuery.trim().toLowerCase();
   let list = state.tracks.filter((t) => matches(t, q));
   if (tab === 'favs') list = list.filter((t) => t.favorite);
-  if (tab === 'offline') list = list.filter((t) => !isCatalog(t) || t.downloaded);
+  if (tab === 'offline') list = list.filter((t) => !isStream(t) || t.downloaded);
   return sortedTracks(list).map((t) => t.id);
 }
 
@@ -1111,7 +1122,7 @@ const ACTIONS = {
     const p = state.playlists.find((x) => x.id === state.menu.playlistId);
     closeSheet();
     const tracks = (p?.trackIds || []).map(getTrack).filter(Boolean);
-    if (!tracks.some(isCatalog)) { toast('Alle Titel sind bereits auf deinem Gerät.'); return; }
+    if (!tracks.some(isStream)) { toast('Alle Titel sind bereits auf deinem Gerät.'); return; }
     download(tracks);
   },
   'pl-queue': () => {
@@ -1185,8 +1196,8 @@ const ACTIONS = {
   },
 };
 
-Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions, driveActions, partyActions, fitnessActions, recognizeActions, podcastActions, searchActions, recapActions, connectActions, kidsActions, metaActions);
-const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms, ...driveForms, ...podcastForms, ...searchForms, ...kidsForms, ...metaForms };
+Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions, driveActions, partyActions, fitnessActions, recognizeActions, podcastActions, searchActions, recapActions, connectActions, kidsActions, metaActions, audiusActions);
+const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms, ...driveForms, ...podcastForms, ...searchForms, ...kidsForms, ...metaForms, ...audiusForms };
 
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-action]');
@@ -1218,7 +1229,7 @@ document.addEventListener('submit', async (e) => {
 
 document.addEventListener('input', (e) => {
   const el = e.target;
-  if (onKidsInput(el) || onConnectInput(el) || onSearchInput(el) || onLyricsInput(el) || onStudioInput(el) || onFitnessInput(el)) return;
+  if (onKidsInput(el) || onAudiusInput(el) || onConnectInput(el) || onSearchInput(el) || onLyricsInput(el) || onStudioInput(el) || onFitnessInput(el)) return;
   if (el.id === 'lib-search') {
     state.libQuery = el.value;
     rerenderKeepScroll();

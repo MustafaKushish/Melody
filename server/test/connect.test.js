@@ -118,3 +118,18 @@ test('Abmelden beendet nur die Verbindung dieser Sitzung', async () => {
   assert.equal(b.ended, false);
   b.close();
 });
+
+test('Audius-Songs lassen sich zwischen Geräten übergeben', async () => {
+  const c = await account();
+  const a = stream(c, 'aud-a-1234', 'A');
+  await a.ready;
+  const b = stream(c, 'aud-b-5678', 'B');
+  await b.ready;
+  await post(c, '/connect/state', { device: 'aud-a-1234', important: true, state: { title: 'Midnight Drive', playing: true, item: { kind: 'audius', id: 'Ab1<script>' } } });
+  const ev = await b.next((e) => e.ev === 'devices' && e.data.devices.find((d) => d.id === 'aud-a-1234')?.state?.item);
+  assert.deepEqual(ev.data.devices.find((d) => d.id === 'aud-a-1234').state.item, { kind: 'audius', id: 'Ab1<script>' });
+  assert.equal((await post(c, '/connect/command', { from: 'aud-a-1234', to: 'aud-b-5678', cmd: 'play-item', arg: { item: { kind: 'audius', id: 'Ab1' }, position: 12 } })).status, 200);
+  const cmd = await b.next((e) => e.ev === 'command');
+  assert.deepEqual(cmd.data.arg, { item: { kind: 'audius', id: 'Ab1' }, position: 12 });
+  a.close(); b.close();
+});
