@@ -1,5 +1,5 @@
 // Party mode (full-screen light show + smooth DJ transitions) and chill mode.
-import { player, MELODY_SOUNDS } from './player.js';
+import { player, MELODY_SOUNDS, isIOS } from './player.js';
 import { icon, hydrateIcons, setIcon } from './icons.js';
 import { $, esc, toast, state, getTrack, coverHTML, hue } from './core.js';
 import { localMix } from './foryou.js';
@@ -92,7 +92,7 @@ export async function openParty() {
   if (P.open) return;
   P.open = true;
   const s = player.settings;
-  P.saved = { preset: s.preset, eq: [...s.eq], dj: { ...s.dj } };
+  P.saved = { preset: s.preset, eq: [...s.eq], dj: { ...s.dj }, eqOn: s.eqOn, fx: s.fx };
   player.applySound('Melody Party');
   player.setDj({ crossfade: 6 });
   const el = $('#party');
@@ -134,6 +134,8 @@ export function closeParty() {
     if (MELODY_SOUNDS[s.preset]) player.applySound(s.preset);
     else player.setEq(s.eq, s.preset);
     player.setDj(s.dj);
+    if (!s.eqOn) player.setEqOn(false);
+    player.returnFx(s.fx);
   }
   $('#party').hidden = true;
   $('#party').innerHTML = '';
@@ -148,10 +150,11 @@ export const partyActions = {
   'party-close': () => closeParty(),
   'party-lights': (el) => { P.lights = !P.lights; el.classList.toggle('on', P.lights); },
   chill: async () => {
-    player.applySound('Melody Chill');
+    // On the iPhone the sound effects would stop the music once the screen is locked – exactly when relaxing.
+    if (!isIOS || player.settings.fx) player.applySound('Melody Chill');
     player.setSleep(30);
     await startSomething('Entspannen');
-    toast('Entspannen: weicher Klang, Musik endet in 30 Minuten');
+    toast(isIOS && !player.settings.fx ? 'Entspannen: ruhiger Mix, Musik endet in 30 Minuten – auch bei gesperrtem Bildschirm' : 'Entspannen: weicher Klang, Musik endet in 30 Minuten');
   },
 };
 

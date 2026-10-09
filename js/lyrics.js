@@ -143,7 +143,7 @@ export async function openSing() {
   sing.open = true;
   const el = $('#sing');
   el.hidden = false;
-  if (!player.settings.fx) player.setFx(true);
+  sing.fxBefore = player.borrowFx();
   player.setVocal(100 - sing.vocals);
   await renderSing();
 }
@@ -153,6 +153,8 @@ export function closeSing() {
   $('#sing').hidden = true;
   player.setVocal(0);
   player.disableMic();
+  player.returnFx(sing.fxBefore); // e.g. on the iPhone: no effects = music keeps playing with the screen locked
+  sing.fxBefore = undefined;
 }
 
 export async function renderSing() {

@@ -26,7 +26,7 @@ import {
   coverUrl, coverHTML, groupCover, setRangeP, openSheet, closeSheet, promptSheet, confirmSheet,
 } from './core.js';
 
-const VERSION = '3.1.0';
+const VERSION = '3.1.1';
 
 const UI_KEY = 'melody.ui';
 const ui = (() => {
@@ -1161,6 +1161,8 @@ const ACTIONS = {
   'a11y-text': (el) => { setA11y('text', +el.dataset.v); rerenderKeepScroll(); },
   'skip-main': () => { const m = $('#main'); m.focus(); m.scrollTop = 0; },
   'drag-noop': () => {},
+  'app-reload': () => location.reload(),
+  'update-later': () => $('#update-bar')?.remove(),
   shortcuts: () => shortcutsSheet(),
   accent: (el) => { ui.accent = el.dataset.color; saveUi(); applyTheme(); render(); },
   install: async () => {
@@ -1253,7 +1255,7 @@ document.addEventListener('change', (e) => {
   } else if (el.dataset.setting === 'fx') {
     player.setFx(el.checked);
     if (!el.checked && player.settings.eqOn) player.setEqOn(false);
-    if (!el.checked && player.ctx) toast('Effekte vollständig aus nach Neuladen der App');
+
     rerenderKeepScroll();
   } else if (el.dataset.setting === 'eqOn') {
     player.setEqOn(el.checked);
@@ -1378,14 +1380,47 @@ hooks.closeOverlays = () => {
 window.addEventListener('online', () => { toast('Wieder online'); rerenderKeepScroll(); });
 window.addEventListener('offline', () => { toast('Offline – heruntergeladene Musik läuft weiter'); rerenderKeepScroll(); });
 
+function showUpdateBar() {
+  if ($('#update-bar')) return;
+  const bar = document.createElement('div');
+  bar.id = 'update-bar';
+  bar.className = 'update-bar';
+  bar.setAttribute('role', 'status');
+  bar.innerHTML = `${icon('sparkle')}<span>Neue Melody-Version ist da</span><button class="btn btn-primary" data-action="app-reload">Jetzt laden</button><button class="icon-btn" data-action="update-later" aria-label="Später">${icon('close')}</button>`;
+  document.body.append(bar);
+}
+
+// iOS home-screen apps sometimes report a viewport that stops short of the screen bottom (by about the
+// status bar height). Measure the gap so the bottom bars can reach the real edge of the screen.
+function fixStandaloneViewport() {
+  if (navigator.standalone !== true) return;
+  const update = () => {
+    const portrait = matchMedia('(orientation: portrait)').matches;
+    const full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    const gap = Math.round(full - window.innerHeight);
+    document.documentElement.style.setProperty('--vfix', gap > 0 && gap < 120 ? `${gap}px` : '0px');
+  };
+  update();
+  addEventListener('resize', update);
+  addEventListener('orientationchange', () => setTimeout(update, 350));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) update(); });
+}
+
 async function boot() {
+  fixStandaloneViewport();
   applyTheme();
   applyA11y();
   renderNav();
   hydrateIcons(document);
   initKids();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW', e));
+    // Home-screen apps often just resume instead of reloading: look for a new version whenever Melody comes
+    // back to the front, and offer to load it (never reload by itself – music might be playing).
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => {
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+    }).catch((e) => console.warn('SW', e));
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) showUpdateBar(); });
   }
   await ensureAccess();
   renderAccountChip();

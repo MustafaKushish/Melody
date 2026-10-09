@@ -52,7 +52,7 @@ async function tryCatalog(pcm) {
 }
 
 async function tryWorld(pcm) {
-  if (DEMO) return { error: 'Die weltweite Erkennung ist in der Demo nicht verbunden.' };
+  if (DEMO) return { error: 'Diesen Song gibt es nicht im Melody-Katalog. Ohne Melody-Server kann Melody nur eigene Katalog-Songs erkennen.', noServer: true };
   try {
     const res = await fetch('api/recognize', { method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: wav(pcm), credentials: 'same-origin' });
     const data = await res.json().catch(() => ({}));
@@ -69,7 +69,7 @@ async function identify(pcm) {
   let result = await tryCatalog(pcm).catch(() => null);
   if (!result) {
     const w = await tryWorld(pcm);
-    if (w?.error) result = { none: true, note: w.error };
+    if (w?.error) result = { none: true, note: w.error, noServer: w.noServer };
     else result = w || { none: true };
   }
   R.result = result;
@@ -185,6 +185,16 @@ async function fromFile(file) {
 function resultHTML() {
   const r = R.result;
   if (!r) return '';
+  if (r.none && r.noServer) {
+    const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    return `<div class="rc-result none"><b>Nicht im Melody-Katalog</b><p>${esc(r.note)}</p>
+      <p class="rc-tip-h">So findest du jeden Song trotzdem:</p>
+      <ol class="rc-tips">${ios
+        ? '<li><b>Siri fragen:</b> „Hey Siri, welcher Song ist das?“</li><li><b>Kontrollzentrum:</b> von oben rechts nach unten wischen und auf das Musikerkennung-Symbol (Shazam) tippen.</li>'
+        : '<li><b>Google-Assistent:</b> „Hey Google, welcher Song ist das?“ oder in der Google-App auf das Mikrofon und „Song suchen“.</li><li><b>Shazam-App</b> öffnen und tippen.</li>'}
+        <li>Den Namen dann hier in Melody suchen – oder im Radio und bei Podcasts.</li></ol>
+      <div class="row"><button class="btn btn-primary" data-action="nav" data-view="search">${icon('search')}In Melody suchen</button></div></div>`;
+  }
   if (r.none) {
     return `<div class="rc-result none"><b>Kein Treffer</b><p>${esc(r.note || 'Diesen Song kennt Melody leider nicht. Halte das Handy näher an die Musik und versuche es noch einmal.')}</p></div>`;
   }

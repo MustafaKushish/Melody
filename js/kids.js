@@ -368,7 +368,7 @@ export const kidsActions = {
 };
 
 // In the Kinder-Modus only these actions work (plus everything inside the login/paywall gate).
-const ALLOWED = new Set(['toggle', 'next', 'prev', 'sing-close', 'sing-mic', 'close-sheet']);
+const ALLOWED = new Set(['toggle', 'next', 'prev', 'sing-close', 'sing-mic', 'close-sheet', 'app-reload', 'update-later']);
 export function kidsAllows(el) {
   const a = el.dataset.action || el.dataset.form || '';
   return a.startsWith('kids') || ALLOWED.has(a) || !!el.closest('#gate');

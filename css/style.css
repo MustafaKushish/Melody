@@ -1395,3 +1395,29 @@ button, .track, .card, .chip, .nav-item { touch-action: manipulation; }
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
 }
 .np-addcover .ico { width: 18px; height: 18px; }
+
+/* iOS home-screen apps sometimes get a viewport that ends above the bottom of the screen (WebKit bug with
+   the translucent status bar): fixed bars then float over a black strip. app.js measures the gap as
+   --vfix and the bottom layers stretch over it. Everywhere else --vfix stays 0. */
+:root { --vfix: 0px; }
+.app { height: calc(100% + var(--vfix)); }
+.now-playing, .sheet-backdrop, .gate, .sing, .drive-layer, .party, .fitness, .kids { bottom: calc(0px - var(--vfix)); }
+.toast { bottom: calc(var(--player) + var(--bottom-nav) + var(--safe-b) + 18px - var(--vfix)); }
+.player-bar { bottom: calc(var(--bottom-nav) + var(--safe-b) - var(--vfix)); }
+.rc-fab { bottom: calc(var(--player) + var(--bottom-nav) + var(--safe-b) + 18px - var(--vfix)); }
+@media (max-width: 800px) {
+  .bottom-nav, .sheet { bottom: calc(0px - var(--vfix)); }
+  .player-bar { bottom: calc(var(--bottom-nav) + var(--safe-b) + 6px - var(--vfix)); }
+  .rc-fab { bottom: calc(var(--player) + var(--bottom-nav) + var(--safe-b) + 16px - var(--vfix)); }
+  .cn-strip { bottom: calc(var(--player) + var(--bottom-nav) + var(--safe-b) + 20px - var(--vfix)); }
+}
+.rc-tip-h { font-weight: 700; margin: 12px 0 4px; color: var(--text); }
+.rc-tips { margin: 0 0 12px; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; color: var(--text-2); }
+.rc-tips b { color: var(--text); }
+.update-bar {
+  position: fixed; z-index: 150; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 10px);
+  display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; border-radius: 16px; width: max-content; max-width: calc(100% - 24px);
+  background: var(--bg-2); border: 1px solid var(--accent); box-shadow: var(--shadow); font-weight: 600;
+}
+.update-bar > .ico { color: var(--accent); }
+.update-bar .btn { padding: 8px 14px; }

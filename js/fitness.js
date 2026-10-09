@@ -306,7 +306,7 @@ export async function openFitness() {
 async function start(key) {
   const w = WORKOUTS[key];
   Object.assign(F, { w, key, started: now(), phase: 'idle', phaseEnd: 0, round: 0, sets: 0, songs: new Set(), cadence: 0, steps: [] });
-  F.saved = { preset: player.settings.preset, eq: [...player.settings.eq], dj: { ...player.settings.dj }, rate: player.settings.rate };
+  F.saved = { preset: player.settings.preset, eq: [...player.settings.eq], dj: { ...player.settings.dj }, rate: player.settings.rate, eqOn: player.settings.eqOn, fx: player.settings.fx };
   F.targetBpm = key === 'laufen' ? 160 : 0;
   F.matchTempo = key === 'laufen';
   render();
@@ -345,6 +345,8 @@ async function stop() {
     player.setEq(s.eq, s.preset);
     player.setDj(s.dj);
     player.setRate(s.rate);
+    if (!s.eqOn) player.setEqOn(false);
+    player.returnFx(s.fx);
     F.saved = null;
   }
   F.w = null;

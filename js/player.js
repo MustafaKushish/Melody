@@ -79,7 +79,7 @@ class Player extends EventTarget {
   constructor() {
     super();
     // Two decks so tracks can crossfade like a DJ mix.
-    this.decks = [new Audio(), new Audio()];
+    this.decks = [];
     this.urls = [null, null];
     this.d = 0;
     this.radioEl = new Audio();
@@ -107,25 +107,7 @@ class Player extends EventTarget {
     this.lookup = () => null; // set by app: id -> track
     this.coverUrl = () => null; // set by app: track -> object URL
     this.settings = loadSettings();
-
-    for (const deck of this.decks) {
-      deck.preload = 'auto';
-      deck.volume = this.settings.volume;
-      deck.preservesPitch = deck.webkitPreservesPitch = this.settings.dj.keepPitch;
-      const mine = (fn) => (e) => { if (e.target === this.el) fn(e); };
-      for (const ev of ['play', 'pause', 'waiting', 'playing']) deck.addEventListener(ev, mine(() => this.emit('state')));
-      deck.addEventListener('timeupdate', mine(() => {
-        this.emit('time');
-        this.checkCrossfade();
-        if (Date.now() - (this._lastSave || 0) > 4000) this.saveState();
-      }));
-      deck.addEventListener('loadedmetadata', mine(() => {
-        this.el.playbackRate = this.settings.rate;
-        this.emit('time');
-        this.updatePosition();
-      }));
-      deck.addEventListener('ended', mine(() => this.onEnded()));
-    }
+    this.decks = [this.makeDeck(), this.makeDeck()];
     this.radioEl.volume = this.settings.volume;
     for (const ev of ['play', 'pause', 'waiting', 'playing']) this.radioEl.addEventListener(ev, () => this.emit('state'));
     this.radioEl.addEventListener('timeupdate', () => { if (this.mode === 'podcast') { this.emit('time'); this.emit('podprogress'); } });
@@ -142,6 +124,97 @@ class Player extends EventTarget {
       this.emit('state');
     });
     this.setupMediaSession();
+    if (isIOS) this.keepPlayingInBackground();
+  }
+
+  makeDeck() {
+    const deck = new Audio();
+    deck.preload = 'auto';
+    deck.volume = this.settings.volume;
+    deck.preservesPitch = deck.webkitPreservesPitch = this.settings.dj.keepPitch;
+    const mine = (fn) => (e) => { if (e.target === this.el) fn(e); };
+    for (const ev of ['play', 'pause', 'waiting', 'playing']) deck.addEventListener(ev, mine(() => this.emit('state')));
+    deck.addEventListener('timeupdate', mine(() => {
+      this.emit('time');
+      this.checkCrossfade();
+      if (Date.now() - (this._lastSave || 0) > 4000) this.saveState();
+    }));
+    deck.addEventListener('loadedmetadata', mine(() => {
+      this.el.playbackRate = this.settings.rate;
+      this.emit('time');
+      this.updatePosition();
+    }));
+    deck.addEventListener('ended', mine(() => this.onEnded()));
+    return deck;
+  }
+
+  // Moves playback to fresh <audio> elements that bypass Web Audio, at the same position.
+  // iOS silences Web Audio as soon as a home-screen app goes to the background or the screen locks,
+  // plain media elements keep playing. Also lets the effects be switched off without reloading.
+  async detachGraph() {
+    if (!this.ctx) return true;
+    if (this.fading) this.cancelFade();
+    const wasPlaying = this.mode === 'library' && !this.el.paused;
+    const fresh = this.decks.map((old) => {
+      const deck = this.makeDeck();
+      const src = old.getAttribute('src');
+      if (src) {
+        deck.src = src;
+        try { deck.currentTime = old.currentTime; } catch { /* set once loaded */ }
+      }
+      deck.playbackRate = old.playbackRate;
+      return deck;
+    });
+    const master = this.n.master?.gain;
+    if (wasPlaying) {
+      if (master) master.value = 0; // no echo while both play for a moment
+      try {
+        fresh[this.d].currentTime = this.el.currentTime;
+        await fresh[this.d].play();
+      } catch {
+        if (master) master.value = 1;
+        for (const d of fresh) d.removeAttribute('src');
+        return false;
+      }
+    }
+    const old = this.decks;
+    this.decks = fresh;
+    for (const o of old) { o.pause(); o.removeAttribute('src'); try { o.load(); } catch { /* ignore */ } }
+    if (this.mic) this.disableMic();
+    try { this.ctx.close(); } catch { /* already closed */ }
+    this.ctx = null;
+    this.n = {};
+    this.filters = [];
+    this.analyser = null;
+    this.emit('state');
+    return true;
+  }
+
+  keepPlayingInBackground() {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && this.ctx && this.mode === 'library' && !this.el.paused) {
+        this.graphHold = true;
+        this.detachGraph();
+      }
+    });
+    // Back in the app: the next tap brings the effects back (a new AudioContext needs a user gesture on iOS).
+    const reattach = () => {
+      if (document.hidden || !this.graphHold) return;
+      this.graphHold = false;
+      if (this.settings.fx && !this.ctx && this.mode === 'library') { this.initGraph(); this.ctx?.resume?.(); }
+    };
+    document.addEventListener('pointerup', reattach, true);
+    document.addEventListener('keydown', reattach, true);
+  }
+
+  // Features like Mitsingen or Party switch the effects on for a while; afterwards the previous state returns.
+  borrowFx() {
+    const had = this.settings.fx;
+    if (!had) this.setFx(true);
+    return had;
+  }
+  returnFx(had) {
+    if (had === false && this.settings.fx) this.setFx(false);
   }
 
   emit(type, detail) {
@@ -201,7 +274,7 @@ class Player extends EventTarget {
   // ---------- Audio graph ----------
   // decks → mix → [vocal remover] → 10-band EQ → DJ filter → dry/echo/reverb → stereo width → master → analyser
   initGraph() {
-    if (this.ctx || !this.settings.fx) return;
+    if (this.ctx || !this.settings.fx || (isIOS && (document.hidden || this.graphHold))) return;
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     const ctx = (this.ctx = new AC());
@@ -343,8 +416,10 @@ class Player extends EventTarget {
   setFx(on) {
     this.settings.fx = on;
     this.saveSettings();
-    if (on) this.initGraph();
-    else this.applyEq();
+    if (on) {
+      this.graphHold = false;
+      this.initGraph();
+    } else this.detachGraph();
   }
 
   setDj(patch) {

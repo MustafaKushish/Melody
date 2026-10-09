@@ -50,6 +50,7 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 - **Eigene Erkennung für den Melody-Katalog**, auch **offline**. Sie arbeitet mit Audio-Fingerabdrücken und wurde mit verrauschten „Handy-Aufnahmen“ getestet (Lautsprecher-Klang, Hall, starke Komprimierung). Sie erkennt sogar die Stelle im Song: **„Hier weiterhören“** spielt nahtlos dort weiter, wo die Musik gerade ist, und **„Herunterladen“** speichert den Song sofort offline.
 - **Weltweite Erkennung** aller anderen Songs über den Dienst AudD (`AUDD_API_TOKEN`, ca. 2 $ pro 1.000 Erkennungen). Treffer zeigen Links zu Apple Music, Spotify und Deezer und landen auf der **Wunschliste**. Was oft gewünscht wird, nimmt Melody als Nächstes in den Katalog auf (`GET /api/admin/wishes`).
 - Alternativ lässt sich eine Aufnahme-Datei auswählen. Die Aufnahmen werden nicht gespeichert.
+- Ohne Server (Handy-Version auf GitHub Pages, Windows-Programm, Demo) erkennt Melody nur Katalog-Songs. Bei anderen Songs zeigt sie, wie es trotzdem geht: Siri bzw. Google-Assistent fragen oder die Musikerkennung im Kontrollzentrum, dann in Melody suchen.
 - Neue Katalog-Songs brauchen einen Fingerabdruck: `node tools/build-fingerprints.mjs`.
 
 ### 🎙 Podcasts & Hörbücher
@@ -103,6 +104,9 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 
 ### 📱 Für jedes Gerät angepasst
 - Geprüft auf iPhone SE bis Pro Max, iPad und Computer, jeweils hoch und quer: Der Vollbild-Player passt sein Cover an den freien Platz an, quer zeigt er zwei Spalten. Die Knöpfe darunter sind eine wischbare Reihe.
+- **iPhone: Musik läuft im Hintergrund und bei gesperrtem Bildschirm weiter.** iOS hält Web-Audio-Effekte an, sobald eine Home-Bildschirm-App in den Hintergrund geht. Melody übergibt die Wiedergabe dann an derselben Stelle an ein normales Audio-Element (ohne Effekte); beim nächsten Tippen in der App sind die Effekte wieder da. Mitsingen, Party und Fitness schalten Effekte nur vorübergehend ein, Entspannen auf dem iPhone gar nicht.
+- iOS-Fehler „schwarzer Streifen unten“ bei Home-Bildschirm-Apps: Melody misst die Lücke und zieht die Leisten bis an den Rand.
+- **Update-Hinweis**: Gibt es eine neue Version, erscheint oben „Neue Melody-Version ist da – Jetzt laden“.
 - Kein „Hängenbleiben“ von Hervorhebungen auf Touch-Bildschirmen, dafür eine kurze Rückmeldung beim Antippen. Der Erkennen-Knopf weicht beim Scrollen aus.
 
 ### 🎉 Party & 🌙 Entspannen
