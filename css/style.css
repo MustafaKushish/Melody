@@ -1396,20 +1396,16 @@ button, .track, .card, .chip, .nav-item { touch-action: manipulation; }
 }
 .np-addcover .ico { width: 18px; height: 18px; }
 
-/* iOS home-screen apps sometimes get a viewport that ends above the bottom of the screen (WebKit bug with
-   the translucent status bar): fixed bars then float over a black strip. app.js measures the gap as
-   --vfix and the bottom layers stretch over it. Everywhere else --vfix stays 0. */
-:root { --vfix: 0px; }
-.app { height: calc(100% + var(--vfix)); }
-.now-playing, .sheet-backdrop, .gate, .sing, .drive-layer, .party, .fitness, .kids { bottom: calc(0px - var(--vfix)); }
-.toast { bottom: calc(var(--player) + var(--bottom-nav) + var(--safe-b) + 18px - var(--vfix)); }
-.player-bar { bottom: calc(var(--bottom-nav) + var(--safe-b) - var(--vfix)); }
-.rc-fab { bottom: calc(var(--player) + var(--bottom-nav) + var(--safe-b) + 18px - var(--vfix)); }
-@media (max-width: 800px) {
-  .bottom-nav, .sheet { bottom: calc(0px - var(--vfix)); }
-  .player-bar { bottom: calc(var(--bottom-nav) + var(--safe-b) + 6px - var(--vfix)); }
-  .rc-fab { bottom: calc(var(--player) + var(--bottom-nav) + var(--safe-b) + 16px - var(--vfix)); }
-  .cn-strip { bottom: calc(var(--player) + var(--bottom-nav) + var(--safe-b) + 20px - var(--vfix)); }
+/* iOS home-screen apps sometimes lay out fixed elements in an area that ends above the screen bottom
+   (WebKit bug), leaving a black strip. The bars and full-screen layers carry a band of their own colour
+   below them: off-screen normally, filling the strip when the bug hits. Nothing is moved or measured. */
+.bottom-nav { box-shadow: 0 90px 0 0 var(--bg-2); }
+.now-playing, .gate { box-shadow: 0 140px 0 0 var(--bg); }
+.sing { box-shadow: 0 140px 0 0 #07070c; }
+.drive-layer { box-shadow: 0 140px 0 0 #05070b; }
+.fitness { box-shadow: 0 140px 0 0 #0b0b10; }
+.party { box-shadow: 0 140px 0 0 #120a1e; }
+.kids { box-shadow: 0 140px 0 0 #f0abfc; }
 }
 .rc-tip-h { font-weight: 700; margin: 12px 0 4px; color: var(--text); }
 .rc-tips { margin: 0 0 12px; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; color: var(--text-2); }
@@ -1421,3 +1417,4 @@ button, .track, .card, .chip, .nav-item { touch-action: manipulation; }
 }
 .update-bar > .ico { color: var(--accent); }
 .update-bar .btn { padding: 8px 14px; }
+@media (max-width: 800px) { .sheet { box-shadow: var(--shadow), 0 120px 0 0 var(--bg-2); } }

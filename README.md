@@ -105,7 +105,7 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 ### 📱 Für jedes Gerät angepasst
 - Geprüft auf iPhone SE bis Pro Max, iPad und Computer, jeweils hoch und quer: Der Vollbild-Player passt sein Cover an den freien Platz an, quer zeigt er zwei Spalten. Die Knöpfe darunter sind eine wischbare Reihe.
 - **iPhone: Musik läuft im Hintergrund und bei gesperrtem Bildschirm weiter.** iOS hält Web-Audio-Effekte an, sobald eine Home-Bildschirm-App in den Hintergrund geht. Melody übergibt die Wiedergabe dann an derselben Stelle an ein normales Audio-Element (ohne Effekte); beim nächsten Tippen in der App sind die Effekte wieder da. Mitsingen, Party und Fitness schalten Effekte nur vorübergehend ein, Entspannen auf dem iPhone gar nicht.
-- iOS-Fehler „schwarzer Streifen unten“ bei Home-Bildschirm-Apps: Melody misst die Lücke und zieht die Leisten bis an den Rand.
+- iOS-Fehler „schwarzer Streifen unten“ bei Home-Bildschirm-Apps: Leisten und Vollbild-Ansichten tragen ein Farbband unter sich, das den Streifen füllt. Es wird nichts gemessen oder verschoben.
 - **Update-Hinweis**: Gibt es eine neue Version, erscheint oben „Neue Melody-Version ist da – Jetzt laden“.
 - Kein „Hängenbleiben“ von Hervorhebungen auf Touch-Bildschirmen, dafür eine kurze Rückmeldung beim Antippen. Der Erkennen-Knopf weicht beim Scrollen aus.
 

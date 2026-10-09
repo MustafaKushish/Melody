@@ -26,7 +26,7 @@ import {
   coverUrl, coverHTML, groupCover, setRangeP, openSheet, closeSheet, promptSheet, confirmSheet,
 } from './core.js';
 
-const VERSION = '3.1.2';
+const VERSION = '3.1.3';
 
 const UI_KEY = 'melody.ui';
 const ui = (() => {
@@ -1390,30 +1390,7 @@ function showUpdateBar() {
   document.body.append(bar);
 }
 
-// iOS home-screen apps sometimes (e.g. after the keyboard was open) lay out fixed elements in an area that
-// ends above the bottom of the screen, leaving a black strip. Measure that area directly with a probe and
-// stretch the bottom bars over the gap. If the area reaches the screen bottom, nothing changes.
-function fixStandaloneViewport() {
-  if (navigator.standalone !== true) return;
-  const probe = document.createElement('div');
-  probe.style.cssText = 'position:fixed;top:0;bottom:0;left:0;width:0;visibility:hidden;pointer-events:none';
-  document.body.append(probe);
-  const update = () => {
-    const portrait = matchMedia('(orientation: portrait)').matches;
-    const full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-    const r = probe.getBoundingClientRect();
-    const gap = Math.round(full - r.bottom);
-    document.documentElement.style.setProperty('--vfix', r.top <= 1 && gap > 4 && gap < 120 ? `${gap}px` : '0px');
-  };
-  update();
-  addEventListener('resize', update);
-  addEventListener('orientationchange', () => setTimeout(update, 350));
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) update(); });
-  document.addEventListener('focusout', () => setTimeout(update, 400)); // keyboard closed
-}
-
 async function boot() {
-  fixStandaloneViewport();
   applyTheme();
   applyA11y();
   renderNav();
