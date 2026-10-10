@@ -1,0 +1,25 @@
+{
+  "name": "Restlos – Vorrat ohne Verschwendung",
+  "short_name": "Restlos",
+  "description": "Kassenbon scannen, vor Verfall gewarnt werden, Reste verkochen oder im Hausflur verschenken.",
+  "lang": "de",
+  "id": "./",
+  "start_url": "./#/vorrat",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f6f1",
+  "theme_color": "#1f7a4d",
+  "categories": ["food", "lifestyle", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "Kassenbon scannen", "short_name": "Scannen", "url": "./#/vorrat?scan=1" },
+    { "name": "Reste-Rezepte", "short_name": "Rezepte", "url": "./#/rezepte" },
+    { "name": "Einkaufsliste", "short_name": "Einkauf", "url": "./#/einkauf" }
+  ]
+}

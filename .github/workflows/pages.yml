@@ -1,5 +1,6 @@
 # Stellt Melody (ohne Server, wie die Demo) auf GitHub Pages bereit:
 # https://<name>.github.io/Melody/ – von dort lässt sich Melody auf Handy und Tablet installieren.
+# Restlos (Vorrats-App) liegt unter https://<name>.github.io/Melody/restlos/.
 name: Web-App (GitHub Pages)
 
 on:
@@ -27,6 +28,9 @@ jobs:
       - name: Web-App bauen
         run: |
           bash tools/build-demo.sh _site
+          # Restlos (Vorrats-App) liegt daneben unter /restlos/
+          mkdir -p _site/restlos
+          cp -r restlos/index.html restlos/manifest.webmanifest restlos/sw.js restlos/css restlos/js restlos/icons _site/restlos/
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
         with:

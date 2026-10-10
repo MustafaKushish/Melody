@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Restlos</title>
+  <meta name="description" content="Restlos – Vorrat ohne Tipparbeit: Kassenbon scannen, vor Verfall gewarnt werden, Reste verkochen oder im Hausflur verschenken.">
+  <meta name="theme-color" content="#1f7a4d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Restlos">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="brand"><img src="icons/icon.svg" alt="" width="30" height="30"><span>Restlos</span></div>
+      <button class="icon-btn" data-action="add" aria-label="Lebensmittel hinzufügen">＋</button>
+    </header>
+    <main id="view" tabindex="-1"></main>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="Bereiche">
+    <a href="#/vorrat" data-tab="vorrat"><svg viewBox="0 0 24 24"><path d="M5 3h14a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM4 10h16M8 6v2M8 13v4"/></svg><span>Vorrat</span></a>
+    <a href="#/rezepte" data-tab="rezepte"><svg viewBox="0 0 24 24"><path d="M6 14a4 4 0 0 1-1-7.9A5 5 0 0 1 14.6 5 4 4 0 1 1 18 14M6 14v6h12v-6M6 17h12"/></svg><span>Rezepte</span></a>
+    <a href="#/einkauf" data-tab="einkauf"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 11h11L21 7H6.2M9 20a1 1 0 1 0 0-.01M18 20a1 1 0 1 0 0-.01"/></svg><span>Einkauf</span></a>
+    <a href="#/teilen" data-tab="teilen"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg><span>Teilen</span></a>
+    <a href="#/bilanz" data-tab="bilanz"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Bilanz</span></a>
+  </nav>
+  <dialog id="sheet" aria-labelledby="sheet-title"></dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <input type="file" id="photo" accept="image/*" capture="environment" hidden>
+  <input type="file" id="backup" accept="application/json,.json" hidden>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
