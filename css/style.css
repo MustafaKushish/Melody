@@ -1608,7 +1608,6 @@ button, .track, .card, .chip, .nav-item { touch-action: manipulation; }
 .fitness { box-shadow: 0 140px 0 0 #0b0b10; }
 .party { box-shadow: 0 140px 0 0 #120a1e; }
 .kids { box-shadow: 0 140px 0 0 #f0abfc; }
-}
 .rc-tip-h { font-weight: 700; margin: 12px 0 4px; color: var(--text); }
 .rc-tips { margin: 0 0 12px; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; color: var(--text-2); }
 .rc-tips b { color: var(--text); }
