@@ -1598,8 +1598,9 @@ button, .track, .card, .chip, .nav-item { touch-action: manipulation; }
 }
 .np-addcover .ico { width: 18px; height: 18px; }
 
-/* iOS home-screen apps sometimes lay out fixed elements in an area that ends above the screen bottom
-   (WebKit bug), leaving a black strip. The bars and full-screen layers carry a band of their own colour
+/* iOS home-screen apps with a translucent status bar lay out the page one status-bar height too short
+   (WebKit bug), so the app looked smaller than the screen. index.html therefore uses the solid "black"
+   status bar: the page then gets exactly the area below it. As a safety net for older installs, the bars and full-screen layers carry a band of their own colour
    below them: off-screen normally, filling the strip when the bug hits. Nothing is moved or measured. */
 .bottom-nav { box-shadow: 0 90px 0 0 var(--bg-2); }
 .now-playing, .gate { box-shadow: 0 140px 0 0 var(--bg); }
