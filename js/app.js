@@ -27,7 +27,7 @@ import {
   coverUrl, coverHTML, groupCover, setRangeP, openSheet, closeSheet, promptSheet, confirmSheet,
 } from './core.js';
 
-const VERSION = '3.3.0';
+const VERSION = '3.4.0';
 
 const UI_KEY = 'melody.ui';
 const ui = (() => {

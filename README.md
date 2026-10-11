@@ -40,12 +40,18 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 ### 🏋️ Fitness-Modus
 - **6 Trainingsarten**: Krafttraining, HIIT, Tabata, Laufen, Cardio & Spinning, Yoga & Dehnen.
 - **Musik im richtigen Tempo**: Melody misst das Tempo (BPM) jedes Songs automatisch und wählt passende Titel, vom Aufwärmen bis zum Höhepunkt. Ein 82-BPM-Song zählt beim Laufen auch als 164 BPM.
-- **Intervall-Timer** (HIIT 30/30, Tabata 20/10) mit großem Ring, Farben (grün = los, blau = Pause), Countdown-Pieptönen und **Sprach-Coach** („Runde 3. Los!“, „Letzte Runde! Gib alles!“). In Pausen wird die Musik leiser.
-- **Krafttraining**: „Satz fertig“ antippen, und der Satzpausen-Timer läuft (60, 90, 120 oder 180 s). Sätze werden mitgezählt.
+- **Intervall-Timer** (HIIT 30/30, Tabata 20/10, Belastung, Pause und Runden einstellbar, Pause- und Überspringen-Knopf) mit großem Ring, Farben (grün = los, blau = Pause), Countdown-Pieptönen und **Sprach-Coach** („Runde 3. Los!“, „Letzte Runde! Gib alles!“). In Pausen wird die Musik leiser.
+- **Persönlicher Trainer fürs Krafttraining** (läuft komplett auf dem Gerät, ohne Server):
+  - **Trainingspläne** speichern: Vorlagen (Ganzkörper, Oberkörper/Unterkörper, Push/Pull/Beine, Zuhause ohne Geräte) oder ein eigener Plan mit über 30 Übungen und eigenen Übungen. Ziel (Kraft, Muskelaufbau, Fit & gesund) und Erfahrung bestimmen die Wiederholungsbereiche.
+  - **Trainer-Check** für Pläne: zu viele Sätze pro Muskel, fehlende Beine oder fehlender Rücken, zu viel Drücken gegenüber Ziehen, zu lange Einheiten, zu wenige Ruhetage.
+  - **Sätze eintragen**: Gewicht, Wiederholungen und „Wie schwer war es?“ (Leicht · Gut · Schwer · Am Limit). Danach startet der passende Pausen-Timer (Grundübungen länger, Isolationsübungen kürzer).
+  - **Tipps und Korrekturen** nach jedem Satz: zu leicht → mehr Gewicht, zu schwer → weniger, „am Limit“ schon im ersten Satz → Hinweis, starker Leistungsabfall → längere Pause, neue Rekorde. Technik-Tipps zu jeder Übung. Tippfehler wie „600 kg“ statt „60 kg“ werden erkannt.
+  - **Entwicklung ohne Überlastung**: doppelte Progression (erst mehr Wiederholungen, dann der kleinste Gewichtsschritt), 10 % leichter nach zwei Einheiten unter dem Ziel, leichter Wiedereinstieg nach Pausen, **leichte Woche (Deload)** nach 6 Wochen am Stück oder bei vielen Sätzen am Limit, Tagesform-Abfrage (müde → weniger Sätze; Schmerzen → deutlicher Hinweis) und Warnung, wenn Muskeln weniger als 48 Stunden Erholung hatten.
+  - **Fortschritt**: geschätzte Maximalkraft pro Übung mit Verlaufskurve, Sätze pro Muskel, Verlauf. Unterbrochene Trainings lassen sich fortsetzen.
 - **Laufen**: Das Handy misst das Schritt-Tempo über den Bewegungssensor. Die Musik passt sich an (±8 %, Tonhöhe bleibt).
 - **Power-Knopf** ⚡: sofort der schnellste passende Song.
 - **Großbildschirm**: Vollbild für Trainer, z. B. auf dem Fernseher im Kursraum.
-- Trainingsverlauf mit Wochenübersicht. Klang und Tempo werden nach dem Training wiederhergestellt.
+- Trainingsverlauf mit **Wochenziel** und Wochen-Serie. Bildschirm bleibt auch nach dem Wechsel in eine andere App an. Sprach-Coach abschaltbar. Klang und Tempo werden nach dem Training wiederhergestellt.
 
 ### 🎵 Song erkennen (wie Shazam)
 - Ein **schwebender Erkennen-Knopf auf jeder Seite**, dazu Taste **S** am Computer, Sprachbefehl im Auto („Welcher Song ist das?“) und ein **Schnellzugriff auf dem Startbildschirm** (lange auf das Melody-Symbol drücken → „Song erkennen“).
@@ -301,6 +307,7 @@ js/db.js, js/tags.js       Lokale Musikbibliothek, ID3-Tags & Cover
 js/catalog.js, js/share.js Melody-Katalog, Downloads, geteilte Playlists
 js/drive.js, js/party.js   Fahrermodus (Karte, Navigation, Sprache), Party-Modus
 js/fitness.js, js/bpm.js   Fitness-Modus, Tempo-Erkennung
+js/trainer.js              Fitness-Trainer: Übungen, Pläne, Tipps, Steigerung
 js/recognize.js            Song erkennen (js/fingerprint.js: Audio-Fingerabdruck)
 js/podcasts.js             Podcasts & Hörbücher
 js/search.js               Suche über alles, auch Liedtexte
