@@ -20,6 +20,7 @@ import { DEMO } from './api.js';
 import { viewAudius, afterAudiusRender, audiusActions, audiusForms, onAudiusInput, homeSection as audiusHome, fillHome as fillAudiusHome } from './audius.js';
 import { editTrackSheet, metaActions, metaForms, onMetaChange } from './meta.js';
 import { a11y, applyA11y, setA11y, TEXT_SIZES, trapTab, dragKey, registerSorter } from './a11y.js';
+import { showArt, trackChanged, playingChanged, nowPlayingOpened, vizColors, artOf } from './fx.js';
 import { kidsActions, kidsForms, kidsActive, kidsAllows, kidsKey, onKidsInput, initKids, refreshKids } from './kids.js';
 import { viewStudio, afterStudioRender, studioActions, onStudioInput, reportPreset } from './studio.js';
 import {
@@ -27,7 +28,7 @@ import {
   coverUrl, coverHTML, groupCover, setRangeP, openSheet, closeSheet, promptSheet, confirmSheet,
 } from './core.js';
 
-const VERSION = '3.4.0';
+const VERSION = '3.5.0';
 
 const UI_KEY = 'melody.ui';
 const ui = (() => {
@@ -626,7 +627,7 @@ function applyTheme() {
   document.documentElement.dataset.theme = ui.theme;
   document.documentElement.style.setProperty('--accent', ui.accent);
   const dark = ui.theme === 'dark' || (ui.theme === 'auto' && !matchMedia('(prefers-color-scheme: light)').matches);
-  $('meta[name=theme-color]').content = dark ? '#0f0f14' : '#f6f6fa';
+  $('meta[name=theme-color]').content = dark ? '#08080d' : '#f4f3fa';
 }
 
 function sheetHead(t) {
@@ -861,6 +862,8 @@ function updatePlayerUI() {
     $(sel).replaceWith(c);
   }
   $('#np-bg').style.setProperty('--h', hue(radio ? title : t.album));
+  showArt({ url: radio ? player.station.favicon || null : artOf(t), seed: radio ? title : t.album });
+  trackChanged(radio ? `radio:${player.station.id}` : t.id);
   $('#np-context').textContent = radio ? 'Live-Radio' : t.album;
   const fav = !radio && t.favorite;
   const npFav = $('#np-fav');
@@ -893,6 +896,8 @@ function updatePodcastUI() {
   const img = ep.image || pod.image;
   setCovers(`<div class="cover" style="--h:${hue(pod.title)}">${img ? `<img src="${esc(img)}" alt="" referrerpolicy="no-referrer">` : icon('mic')}</div>`);
   $('#np-bg').style.setProperty('--h', hue(pod.title));
+  showArt({ url: img || null, seed: pod.title });
+  trackChanged(`pod:${pod.title}:${ep.title}`);
   $('#np-context').textContent = 'Podcast';
   $('#np-fav').hidden = true;
   document.querySelectorAll('[data-action=shuffle], [data-action=repeat]').forEach((el) => { el.disabled = true; el.style.opacity = '.35'; });
@@ -917,6 +922,7 @@ function updateState() {
   }
   $('#np-speed').textContent = String(player.mode === 'podcast' ? player.settings.podRate || 1 : player.settings.rate).replace('.', ',') + '×';
   $('#np-sleep').textContent = player.sleepUntil ? `${Math.ceil((player.sleepUntil - Date.now()) / 60000)} Min.` : player.sleepAtEnd ? 'Titelende' : 'Sleep';
+  playingChanged();
   if (playing) startViz();
 }
 
@@ -963,6 +969,7 @@ function openNowPlaying() {
   void np.offsetWidth; // start from the closed position, then animate
   np.classList.add('np-shown');
   startViz();
+  nowPlayingOpened();
   onNowPlayingOpen();
 }
 function closeNowPlaying() {
@@ -978,6 +985,7 @@ function closeNowPlaying() {
 
 // Visualizer: frequency bars drawn while the now-playing screen is open.
 let vizRunning = false;
+let colors = ['#8b5cf6', '#ec4899'], vizFrame = 0;
 function startViz() {
   const canvas = $('#np-viz');
   if (canvas.hidden) return;
@@ -995,21 +1003,27 @@ function startViz() {
       return;
     }
     player.analyser.getByteFrequencyData(data);
-    const W = canvas.width, H = canvas.height, n = 48;
+    // Mirrored spectrum: bass in the middle, highs to both sides, in the colours of the cover.
+    const W = canvas.width, H = canvas.height, n = 28, mid = W / 2, bw = mid / n;
     g.clearRect(0, 0, W, H);
-    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-    const grad = g.createLinearGradient(0, H, 0, 0);
-    grad.addColorStop(0, accent);
-    grad.addColorStop(1, '#ec4899');
+    if (vizFrame++ % 30 === 0) colors = vizColors(); // follows the cover colours, which arrive a moment after the song
+    const grad = g.createLinearGradient(0, 0, W, 0);
+    grad.addColorStop(0, colors[1]);
+    grad.addColorStop(0.5, colors[0]);
+    grad.addColorStop(1, colors[1]);
     g.fillStyle = grad;
-    const bw = W / n;
     for (let i = 0; i < n; i++) {
-      const v = data[Math.floor((i / n) ** 1.6 * data.length * 0.85)] / 255;
-      const h = Math.max(3, v * H);
-      g.beginPath();
-      g.roundRect ? g.roundRect(i * bw + 2, H - h, bw - 4, h, 3) : g.rect(i * bw + 2, H - h, bw - 4, h);
-      g.fill();
+      const v = data[Math.floor((i / n) ** 1.5 * data.length * 0.8)] / 255;
+      const h = Math.max(4, v * v * H * 0.95);
+      const y = (H - h) / 2;
+      for (const x of [mid + i * bw, mid - (i + 1) * bw]) {
+        g.globalAlpha = 1 - (i / n) * 0.55;
+        g.beginPath();
+        g.roundRect ? g.roundRect(x + 2, y, bw - 4, h, (bw - 4) / 2) : g.rect(x + 2, y, bw - 4, h);
+        g.fill();
+      }
     }
+    g.globalAlpha = 1;
     requestAnimationFrame(draw);
   };
   requestAnimationFrame(draw);

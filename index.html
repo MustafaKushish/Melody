@@ -5,17 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Melody</title>
   <meta name="description" content="Melody – deine Musik, werbefrei, auf allen Geräten.">
-  <meta name="theme-color" content="#0f0f14">
+  <meta name="theme-color" content="#08080d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Melody">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/design.css">
 </head>
 <body>
+  <div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
   <button class="skip-link" data-action="skip-main">Zum Inhalt springen</button>
   <div class="app">
     <aside class="sidebar">
@@ -38,6 +40,7 @@
         <div class="t" id="pb-title"></div>
         <div class="a" id="pb-artist"></div>
       </div>
+      <span class="eq-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
     </div>
     <div class="pb-center">
       <button class="icon-btn hide-sm" data-action="shuffle" id="pb-shuffle" aria-label="Zufallswiedergabe" data-icon="shuffle"></button>
@@ -59,14 +62,18 @@
   <nav class="bottom-nav" id="bottom-nav"></nav>
 
   <section id="now-playing" class="now-playing" hidden aria-label="Aktuelle Wiedergabe">
-    <div class="np-bg" id="np-bg"></div>
+    <div class="np-bg" id="np-bg"><i></i><i></i><i></i></div>
     <header class="np-head">
       <button class="icon-btn" data-action="close-np" aria-label="Schließen" data-icon="down"></button>
       <span class="np-context" id="np-context">Wird gespielt</span>
       <button class="icon-btn" data-action="np-menu" aria-label="Mehr" data-icon="more"></button>
     </header>
     <div class="np-art">
-      <div class="cover xl" id="np-cover"></div>
+      <div class="np-stage" id="np-stage">
+        <div class="np-vinyl" aria-hidden="true"><div class="np-vinyl-label"></div></div>
+        <div class="np-glow" aria-hidden="true"></div>
+        <div class="cover xl" id="np-cover"></div>
+      </div>
       <canvas id="np-viz" width="600" height="160"></canvas>
       <div id="np-lyrics" class="lyrics-view" hidden></div>
     </div>

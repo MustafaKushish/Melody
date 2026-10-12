@@ -161,12 +161,20 @@ let npSwipe = null;
 document.addEventListener('pointerdown', (e) => {
   if (e.pointerType === 'mouse' || !e.target.closest?.('#now-playing .np-head, #now-playing .np-art')) return;
   if (e.target.closest('#np-lyrics, button, input')) return;
-  npSwipe = { x: e.clientX, y: e.clientY, id: e.pointerId, t: Date.now(), onCover: !!e.target.closest('#np-cover') };
+  npSwipe = { x: e.clientX, y: e.clientY, id: e.pointerId, t: Date.now(), onCover: !!e.target.closest('#np-stage') };
 });
 // The player follows the finger while it is pulled down, like a real sheet.
 document.addEventListener('pointermove', (e) => {
   if (!npSwipe || e.pointerId !== npSwipe.id) return;
   const dx = e.clientX - npSwipe.x, dy = e.clientY - npSwipe.y;
+  // The cover follows a sideways swipe and tilts a little, like a card being pushed away.
+  if (npSwipe.onCover && !npSwipe.drag && (npSwipe.side || (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.2)) && player.mode === 'library') {
+    npSwipe.side = true;
+    const st = $('#np-stage');
+    st.classList.add('dragging');
+    st.style.transform = `translateX(${dx * 0.8}px) rotate(${dx / 28}deg)`;
+    return;
+  }
   if (!npSwipe.drag && dy > 12 && dy > Math.abs(dx) * 1.2) npSwipe.drag = true;
   if (!npSwipe.drag) return;
   const np = $('#now-playing');
@@ -179,6 +187,13 @@ document.addEventListener('pointerup', (e) => {
   npSwipe = null;
   const dx = e.clientX - s.x, dy = e.clientY - s.y, dt = Date.now() - s.t;
   const np = $('#now-playing');
+  if (s.side) {
+    const st = $('#np-stage');
+    st.classList.remove('dragging');
+    st.style.transform = '';
+    if (Math.abs(dx) > 70) { if (dx < 0) player.next(); else player.prev(); }
+    return;
+  }
   if (s.drag) {
     np.classList.remove('dragging');
     if (dy > 120 || (dy > 40 && dy / dt > 0.6)) $('#now-playing [data-action=close-np]')?.click();
@@ -190,6 +205,7 @@ document.addEventListener('pointerup', (e) => {
 });
 document.addEventListener('pointercancel', () => {
   if (npSwipe?.drag) { const np = $('#now-playing'); np.classList.remove('dragging'); np.style.transform = ''; }
+  if (npSwipe?.side) { const st = $('#np-stage'); st.classList.remove('dragging'); st.style.transform = ''; }
   npSwipe = null;
   swipe = null;
 });

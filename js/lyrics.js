@@ -111,7 +111,7 @@ let lastIdx = -1;
 export async function renderNpLyrics() {
   const box = $('#np-lyrics');
   const t = player.mode === 'library' ? player.track : null;
-  $('#np-cover').hidden = npLyricsOpen;
+  $('#np-stage').hidden = npLyricsOpen;
   $('#np-viz').hidden = npLyricsOpen;
   box.hidden = !npLyricsOpen;
   document.querySelectorAll('[data-action=np-lyrics]').forEach((b) => b.classList.toggle('on', npLyricsOpen));

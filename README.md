@@ -6,6 +6,8 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 
 ## ✨ Funktionen
 
+> **Neu in Melody 3.5:** Neues Design mit Glas-Flächen und Animationen, ein Player mit Schallplatte und Farben aus dem Cover, und im Fitness-Modus überlappt nichts mehr.
+>
 > **Neu in Melody 3.2:** Freie Musik von Audius – tausende Songs kostenlos streamen.
 >
 > **Neu in Melody 3.0:** Suche über alles (auch Liedtexte), Melody-Rückblick, Melody Connect (Geräte fernsteuern und Musik mitnehmen), Kinder-Modus mit Eltern-PIN sowie Barrierefreiheit und Ziehen zum Sortieren.
@@ -117,10 +119,17 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 - **Foto wählen** (aus der Mediathek des Handys, wird automatisch verkleinert) oder **online suchen** in der freien Datenbank MusicBrainz: Treffer antippen übernimmt Titel, Künstler, Album, Jahr und das Cover (Cover Art Archive).
 - Titel, Künstler, Album, Jahr und Genre lassen sich jederzeit ändern. Titel mit arabischer, persischer oder hebräischer Schrift werden richtig herum angezeigt.
 
+### 🎨 Design & Player
+- **Der Player:** Hinter dem Cover liegt eine Schallplatte, die beim Abspielen herausfährt und sich dreht (mit dem Cover als Etikett). Hintergrund, Glühen, Fortschrittsbalken und Visualizer nehmen die Farben des Covers an und blenden beim Songwechsel weich über.
+- **Im Takt:** Mit Klangeffekten (Computer, Android) pulsiert das Glühen unter dem Cover mit dem Bass. Ohne Web Audio (iPhone) pulsiert es im Tempo des Songs, wenn es bekannt ist.
+- Neues Cover kommt beim Wischen von der Seite herein, beim Pausieren tritt es einen Schritt zurück und die Platte fährt wieder hinein. Auf großen Bildschirmen steht das Cover links, alles andere rechts.
+- Überall: ein ruhig fließender Farbhintergrund, Glas-Flächen, eine schwebende Player-Leiste mit kleinem Equalizer, Karten mit Lichtstreifen beim Darüberfahren und Seiten, die gestaffelt hereingleiten. Beim gerade laufenden Song zeigt die Liste einen Equalizer statt der Nummer.
+- „Bewegung reduzieren“ (System) und der ruhige Modus in Melody schalten alle Animationen ab.
+
 ### 📱 Für jedes Gerät angepasst
 - Geprüft auf iPhone SE bis Pro Max, iPad und Computer, jeweils hoch und quer: Der Vollbild-Player passt sein Cover an den freien Platz an, quer zeigt er zwei Spalten. Die Knöpfe darunter sind eine wischbare Reihe.
 - **iPhone und iPad: Musik läuft immer über ein normales Audio-Element, nie über Web Audio.** So spielt sie im Hintergrund und bei gesperrtem Bildschirm weiter, Songs aus dem Netz (Audius) haben Ton, und Pausieren hält sofort an. Equalizer, DJ-Effekte, Stimm-Entferner und Mikrofon-Hall gibt es deshalb nur auf Computer und Android; Überblenden ist auf iOS aus (iOS erlaubt keine Lautstärke-Regelung einzelner Songs).
-- iOS-Fehler „schwarzer Streifen unten“ bei Home-Bildschirm-Apps: Leisten und Vollbild-Ansichten tragen ein Farbband unter sich, das den Streifen füllt. Es wird nichts gemessen oder verschoben.
+- iOS-Fehler „App kleiner als der Bildschirm / schwarzer Streifen unten“ bei Home-Bildschirm-Apps: Seit 3.5 nutzt Melody die feste schwarze Statusleiste statt der durchsichtigen, bei der iOS die Seite zu kurz anlegt. **Wichtig:** iOS merkt sich diese Einstellung beim Hinzufügen zum Home-Bildschirm, also Melody einmal vom Home-Bildschirm löschen und neu hinzufügen.
 - **Update-Hinweis**: Gibt es eine neue Version, erscheint oben „Neue Melody-Version ist da – Jetzt laden“.
 - Kein „Hängenbleiben“ von Hervorhebungen auf Touch-Bildschirmen, dafür eine kurze Rückmeldung beim Antippen. Der Erkennen-Knopf weicht beim Scrollen aus.
 
@@ -296,7 +305,7 @@ Studios brauchen für Musik über Lautsprecher eine **GEMA-Lizenz für öffentli
 ## 🗂 Aufbau
 
 ```
-index.html, css/, icons/   App-Oberfläche (PWA, offline-fähig)
+index.html, css/, icons/   App-Oberfläche (PWA, offline-fähig); css/design.css: Design 3.5
 js/app.js                  Ansichten: Start, Bibliothek, Playlists, Radio, Einstellungen
 js/account.js              Anmeldung, Abo-Auswahl, Gutscheine, Konto
 js/lyrics.js               Lyrics, Karaoke-Modus, Mikrofon, Mitsing-Quote
@@ -307,6 +316,7 @@ js/db.js, js/tags.js       Lokale Musikbibliothek, ID3-Tags & Cover
 js/catalog.js, js/share.js Melody-Katalog, Downloads, geteilte Playlists
 js/drive.js, js/party.js   Fahrermodus (Karte, Navigation, Sprache), Party-Modus
 js/fitness.js, js/bpm.js   Fitness-Modus, Tempo-Erkennung
+js/fx.js                   Cover-Farben, Schallplatte und Takt-Glühen des Players
 js/trainer.js              Fitness-Trainer: Übungen, Pläne, Tipps, Steigerung
 js/recognize.js            Song erkennen (js/fingerprint.js: Audio-Fingerabdruck)
 js/podcasts.js             Podcasts & Hörbücher

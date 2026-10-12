@@ -389,8 +389,10 @@ function exOptions(custom, placeholder) {
   }).join('');
 }
 
-const head = (title, back = 'fit-home') => `<header class="ft-head"><button class="icon-btn" data-action="${back}" aria-label="Zurück">${icon('back')}</button>
-  <span class="ft-badge">${title}</span><button class="icon-btn" data-action="fit-close" aria-label="Schließen">${icon('close')}</button></header>`;
+// The title text gets its own element so a long plan name is cut off with "…" instead of pushing the buttons.
+const badge = (lead, text) => `<span class="ft-badge">${lead}<span class="ft-badge-t">${text}</span></span>`;
+const head = (lead, text, back = 'fit-home') => `<header class="ft-head"><button class="icon-btn" data-action="${back}" aria-label="Zurück">${icon('back')}</button>
+  ${badge(lead, text)}<button class="icon-btn" data-action="fit-close" aria-label="Schließen">${icon('close')}</button></header>`;
 
 function pickerHTML() {
   const h = history();
@@ -424,7 +426,7 @@ function pickerHTML() {
       <div class="tr-hero-b"><button class="ft-big" data-action="tr-plans">${icon('add')} Plan wählen</button>
         ${log.length ? `<button class="chip" data-action="tr-progress">${icon('chart')} Fortschritt</button>` : ''}</div></div>`;
   }
-  return `<header class="ft-head"><span class="ft-badge">${icon('fitness')} Fitness</span>
+  return `<header class="ft-head">${badge(icon('fitness'), 'Fitness')}
       <button class="icon-btn" data-action="fit-close" aria-label="Schließen">${icon('close')}</button></header>
     <div class="ft-pick">
       <h1>Was trainierst du heute?</h1>
@@ -446,7 +448,7 @@ function pickerHTML() {
 function plansHTML() {
   const s = store();
   const p = s.profile;
-  return `${head(`${icon('edit')} Trainingspläne`)}
+  return `${head(icon('edit'), 'Trainingspläne')}
     <div class="ft-pick">
       <h2>Über dich</h2>
       <div class="tr-profile">
@@ -468,7 +470,7 @@ function plansHTML() {
 function editHTML() {
   const pl = F.edit;
   const s = store();
-  return `${head(`${icon('edit')} Plan bearbeiten`, 'tr-plans')}
+  return `${head(icon('edit'), 'Plan bearbeiten', 'tr-plans')}
     <div class="ft-pick tr-editor">
       <label class="tr-field">Name<input class="input plain" id="pe-name" value="${esc(pl.name)}" maxlength="40"></label>
       <div class="tr-field">Trainings pro Woche<div class="tr-stepper"><button class="chip" data-action="pe-week" data-d="-1" aria-label="Weniger">−</button><b id="pe-week">${pl.perWeek}</b><button class="chip" data-action="pe-week" data-d="1" aria-label="Mehr">+</button></div></div>
@@ -518,7 +520,7 @@ function readyHTML() {
   const dl = deloadState(log);
   const items = buildItems(day, s, r.readiness, r.deload);
   const moods = [['top', '💪', 'Topfit'], ['ok', '🙂', 'Normal'], ['muede', '😴', 'Müde'], ['schmerz', '🤕', 'Schmerzen']];
-  return `${head(`${icon('fitness')} ${esc(plan.name)}`)}
+  return `${head(icon('fitness'), esc(plan.name))}
     <div class="ft-pick tr-ready">
       <div class="seg ft-seg tr-days">${plan.days.map((d, i) => `<label><input type="radio" name="tr-day" value="${i}" ${i === r.dayIdx ? 'checked' : ''}><span>${esc(d.name)}</span></label>`).join('')}</div>
       <h2>Wie fühlst du dich heute?</h2>
@@ -559,7 +561,7 @@ function progressHTML() {
   const vol = {};
   for (const x of week) for (const e of x.entries) { const m = exInfo(e.ex, s.custom).muscle; vol[m] = (vol[m] || 0) + e.sets.length; }
   const dl = deloadState(log);
-  return `${head(`${icon('chart')} Fortschritt`)}
+  return `${head(icon('chart'), 'Fortschritt')}
     <div class="ft-pick">
       ${!log.length ? '<p class="ft-sub">Noch keine Trainings mit Trainer. Nach deinem ersten Training siehst du hier, wie du stärker wirst.</p>' : `
       <div class="tr-stats"><div><b>${log.length}</b><span>Trainings</span></div><div><b>${log.reduce((a, x) => a + sessionStats(x).sets, 0)}</b><span>Sätze</span></div>
@@ -578,7 +580,7 @@ function summaryHTML() {
   const r = F.summary;
   const s = store();
   const st = r.stats;
-  return `${head('🎉 Geschafft')}
+  return `${head('🎉', 'Geschafft')}
     <div class="ft-pick tr-sum">
       <h1>Stark gemacht!</h1>
       <div class="tr-stats"><div><b>${Math.round(r.session.secs / 60)}</b><span>Min.</span></div><div><b>${st.sets}</b><span>Sätze</span></div><div><b>${fmtKg(st.volume)}</b><span>kg bewegt</span></div></div>
@@ -601,7 +603,7 @@ function intervalSetupHTML() {
 function sessionHTML() {
   const w = F.w;
   const trainer = w.timer === 'rest';
-  return `<header class="ft-head"><span class="ft-badge">${w.emoji} ${F.tr?.dayName ? esc(F.tr.dayName) : w.name}</span>
+  return `<header class="ft-head">${badge(w.emoji, F.tr?.dayName ? esc(F.tr.dayName) : w.name)}
       <span class="ft-elapsed" id="ft-elapsed">0:00</span>
       ${trainer ? `<button class="btn ft-finish" data-action="fit-stop">${icon('check')} Beenden</button>` : `<button class="icon-btn" data-action="fit-stop" aria-label="Training beenden">${icon('close')}</button>`}</header>
     <div class="ft-status" id="ft-status" hidden></div>
