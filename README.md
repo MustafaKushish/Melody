@@ -33,6 +33,7 @@ Melody ist eine Musik-App für **iPhone, iPad, Android, Windows, macOS und Linux
 
 ### 🚗 Fahrermodus – sicher unterwegs
 - **Karte mit Navigation** (OpenStreetMap): Ziel suchen, Route, Abbiege-Hinweise mit Entfernung, Ankunftszeit, automatische Neuberechnung beim Verfahren.
+- **Mit Google Maps, Apple Karten oder Waze navigieren**: Unter der Suche wählst du die Navigations-App. Ziele öffnen sich dann direkt dort, die Musik von Melody läuft im Hintergrund weiter. Auch eine laufende Melody-Route lässt sich mit einem Tipp übergeben. (Eine Google-Karte direkt in Melody bräuchte einen kostenpflichtigen API-Schlüssel, und Google erlaubt darauf keine eigene Abbiege-Navigation.)
 - **Sprachansagen** („In 350 Metern links abbiegen auf Hauptstraße“). Die Musik wird dabei automatisch leiser.
 - **Sprachsteuerung**: „Nächster Song“, „Leiser“, „Spiel Sommerwind“, „Spiel Gute Laune“, „Navigiere nach Zeil 10“, „Wann kommen wir an?“, „Gefällt mir“.
 - **Sicherheit zuerst**: riesige Knöpfe, immer dunkel, Bildschirm bleibt an. **Ab 10 km/h sind Tippen und Suchen gesperrt.** Bedienen geht dann per Sprache, oder der **Beifahrer** schaltet die Sperre für 15 Minuten frei.

@@ -15,6 +15,26 @@ const DEFAULT_GEO = {
 };
 const geo = () => ({ ...DEFAULT_GEO, ...(window.MELODY_GEO || {}) });
 
+// Navigation can be handed to another app: the destination opens there, Melody's music keeps playing.
+const NAV_KEY = 'melody.drive.nav';
+const NAV_APPS = {
+  melody: { name: 'Melody' },
+  google: { name: 'Google Maps', url: (d) => `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}&travelmode=driving&dir_action=navigate` },
+  apple: { name: 'Apple Karten', url: (d) => `https://maps.apple.com/?daddr=${d.lat},${d.lng}&dirflg=d` },
+  waze: { name: 'Waze', url: (d) => `https://waze.com/ul?ll=${d.lat},${d.lng}&navigate=yes` },
+};
+const navApp = () => { try { return NAV_APPS[localStorage.getItem(NAV_KEY)] ? localStorage.getItem(NAV_KEY) : 'melody'; } catch { return 'melody'; } };
+function openNavApp(dest, app = navApp()) {
+  const a = NAV_APPS[app];
+  if (!a?.url) return false;
+  const link = document.createElement('a');
+  link.href = a.url(dest);
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.click();
+  return true;
+}
+
 const MOVING_KMH = 10;
 const PASSENGER_MIN = 15;
 
@@ -360,8 +380,11 @@ function guide() {
   if (eta) {
     eta.hidden = false;
     const at = new Date(Date.now() + secs * 1000).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    const ext = navApp() === 'melody' ? 'google' : navApp();
     eta.innerHTML = `<div><b>${at}</b><span>${fmtTime(secs)} · ${fmtDist(left)}</span></div>
+      <button class="dv-handoff" data-action="dv-handoff" data-app="${ext}">${icon('explore')}<span>${NAV_APPS[ext].name}</span></button>
       <button class="dv-end" data-action="dv-end-route">Beenden</button>`;
+    hydrateIcons(eta);
   }
 
   // Off-route → recalculate (at most every 15 s).
@@ -388,7 +411,9 @@ function renderSearch() {
   if (locked()) {
     box.innerHTML = `<div class="dv-locked">${icon('mic')}<div><b>Während der Fahrt gesperrt</b><span>Sag „Navigiere nach …“ oder lass den Beifahrer tippen.</span></div></div>`;
   } else {
+    const cur = navApp();
     box.innerHTML = `<form data-form="dv-search" class="dv-form">${icon('search')}<input id="dv-q" class="input plain" placeholder="Wohin geht's?" autocomplete="off" enterkeyhint="search"></form>
+      <div class="dv-navapps" role="radiogroup" aria-label="Navigation mit">${Object.entries(NAV_APPS).map(([k, a]) => `<button class="dv-navapp${k === cur ? ' on' : ''}" role="radio" aria-checked="${k === cur}" data-action="dv-navapp" data-app="${k}">${a.name}</button>`).join('')}</div>
       ${D.results.length ? `<div class="dv-results">${D.results.map((x, i) => `<button class="dv-result" data-action="dv-go" data-i="${i}">${icon('explore')}<span>${esc(x.name)}</span></button>`).join('')}</div>` : ''}`;
   }
   hydrateIcons(box);
@@ -548,7 +573,17 @@ export const driveActions = {
     $('#dv-recenter').hidden = true;
     if (D.pos && D.map) D.map.setView([D.pos.lat, D.pos.lng], 16);
   },
-  'dv-go': (el) => startRoute(D.results[+el.dataset.i]),
+  'dv-go': (el) => {
+    const dest = D.results[+el.dataset.i];
+    if (openNavApp(dest)) { D.results = []; renderSearch(); return; }
+    startRoute(dest);
+  },
+  'dv-navapp': (el) => {
+    try { localStorage.setItem(NAV_KEY, el.dataset.app); } catch { /* private mode: choice lasts until reload */ }
+    renderSearch();
+    if (el.dataset.app !== 'melody') toast(`Ziele öffnen jetzt in ${NAV_APPS[el.dataset.app].name}. Die Musik läuft weiter.`);
+  },
+  'dv-handoff': (el) => { if (D.route) openNavApp(D.route.dest, el.dataset.app); },
   'dv-end-route': () => { endRoute(); speak('Navigation beendet.'); },
   'dv-mix': (el) => playIds(localMix('', el.dataset.mood).ids),
   'dv-favs': () => {
