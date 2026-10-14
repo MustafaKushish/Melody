@@ -580,3 +580,23 @@ main { padding-bottom: calc(var(--player) + var(--bottom-nav) + var(--safe-b) + 
 }
 .tr-effort span { white-space: nowrap; }
 @media (max-width: 380px) { .tr-effort span { padding: 10px 2px !important; font-size: 13px !important; } }
+
+/* Fahrermodus: choose the navigation app, hand a running route over */
+.dv-navapps { display: flex; gap: 6px; margin-top: 8px; overflow-x: auto; scrollbar-width: none; }
+.dv-navapps::-webkit-scrollbar { display: none; }
+.dv-navapp {
+  flex: none; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .14);
+  background: rgba(10, 14, 20, .9); color: #cbd5e1; font-weight: 700; font-size: 14px; transition: background .2s, color .2s, transform .3s var(--spring);
+}
+.dv-navapp.on { background: #f5f7fa; color: #0b0f14; border-color: #f5f7fa; }
+.dv-navapp:active { transform: scale(.94); }
+.dv-handoff {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 14px; border-radius: 12px; border: 0;
+  background: #1d4ed8; color: #fff; font-weight: 700; white-space: nowrap;
+}
+.dv-handoff .ico { width: 20px; height: 20px; }
+.dv-eta .dv-handoff span { color: #fff; font-size: 15px; }
+.dv-eta { right: 10px; flex-wrap: wrap; gap: 8px 10px; }
+.dv-eta > div { flex: 1 1 120px; }
+.dv-eta > button { flex: 1 1 auto; justify-content: center; }
+@media (max-width: 480px) { .dv-eta > div { flex-basis: 100%; } }
