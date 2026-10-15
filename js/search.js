@@ -8,6 +8,7 @@ import { podIndex, podCover, searchPods } from './podcasts.js';
 import { parseLRC } from './lyrics.js';
 import { MOODS } from './foryou.js';
 import { searchInto as audiusSearch } from './audius.js';
+import { searchInto as jamendoSearch } from './jamendo.js';
 
 const RECENT_KEY = 'melody.searches';
 const S = { q: '', catalogLyrics: null, timer: 0 };
@@ -235,8 +236,9 @@ async function update() {
     const [cat, lyr] = await Promise.all([loadCatalog().catch(() => []), loadCatalogLyrics().catch(() => new Map())]);
     if (S.q.trim() !== q || !$('#sr-results')) return;
     lastRes = searchAll(q, cat, lyr);
-    box.innerHTML = resultsHTML(lastRes, q) + '<div id="sr-audius"></div>';
+    box.innerHTML = resultsHTML(lastRes, q) + '<div id="sr-audius"></div><div id="sr-jamendo"></div>';
     audiusSearch(q, $('#sr-audius'));
+    jamendoSearch(q, $('#sr-jamendo'));
   }
   hydrateIcons(box);
 }

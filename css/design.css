@@ -102,9 +102,13 @@ body:has(#now-playing.np-shown) .ambient i, body.fit-open .ambient i { animation
 .switch span::after { transition: transform .35s var(--spring); box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }
 .switch input:checked + span { background: var(--grad); border-color: transparent; box-shadow: var(--glow); }
 
-/* ---------- Panels & cards ---------- */
+/* ---------- Panels & cards with backdrop-blur and glass polish ---------- */
 .panel, .feature, .stat, .discover-item, .rc-result, .ai-ask, .aud-note, .plan, .welcome, .discover-hero {
-  background-color: var(--glass); border-color: var(--line);
+  background-color: var(--glass);
+  border-color: var(--line);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 .panel { border-radius: 22px; }
 .stat { border-radius: 16px; padding: 12px 18px; }
