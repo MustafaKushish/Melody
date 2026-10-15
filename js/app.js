@@ -18,6 +18,7 @@ import { viewSearch, afterSearchRender, onSearchInput, openSearch, searchActions
 import { viewPodcasts, viewPodcast, podcastActions, podcastForms, homeSection as podHome, refreshSubscriptions, fmtTime as podTime } from './podcasts.js';
 import { DEMO } from './api.js';
 import { viewAudius, afterAudiusRender, audiusActions, audiusForms, onAudiusInput, homeSection as audiusHome, fillHome as fillAudiusHome } from './audius.js';
+import { viewJamendo, afterJamendoRender, jamendoActions, jamendoForms, onJamendoInput } from './jamendo.js';
 import { editTrackSheet, metaActions, metaForms, onMetaChange } from './meta.js';
 import { a11y, applyA11y, setA11y, TEXT_SIZES, trapTab, dragKey, registerSorter } from './a11y.js';
 import { showArt, trackChanged, playingChanged, nowPlayingOpened, vizColors, artOf } from './fx.js';
@@ -98,6 +99,7 @@ const NAV = [
   { id: 'search', label: 'Suchen', icon: 'search', mobile: true },
   { id: 'discover', label: 'Entdecken', icon: 'explore' },
   { id: 'audius', label: 'Freie Musik', icon: 'globe' },
+  { id: 'jamendo', label: 'Jamendo Musik', icon: 'note' },
   { id: 'podcasts', label: 'Podcasts', icon: 'podcast', mobile: true },
   { id: 'foryou', label: 'Für dich', icon: 'sparkle' },
   { id: 'library', label: 'Bibliothek', icon: 'library', mobile: true },
@@ -134,6 +136,7 @@ function parseRoute() {
 const VIEWS = {
   home: viewHome,
   audius: viewAudius,
+  jamendo: viewJamendo,
   library: viewLibrary,
   album: viewAlbum,
   artist: viewArtist,
@@ -196,6 +199,7 @@ function afterRender(view) {
   if (view === 'home' || (view === 'library' && !state.tracks.length)) fillHomeCatalog();
   if (view === 'home') fillAudiusHome();
   if (view === 'audius') afterAudiusRender();
+  if (view === 'jamendo') afterJamendoRender();
   if (view === 'studio') afterStudioRender();
 }
 
@@ -1231,8 +1235,8 @@ const ACTIONS = {
   },
 };
 
-Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions, driveActions, partyActions, fitnessActions, recognizeActions, podcastActions, searchActions, recapActions, connectActions, kidsActions, metaActions, audiusActions);
-const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms, ...driveForms, ...podcastForms, ...searchForms, ...kidsForms, ...metaForms, ...audiusForms };
+Object.assign(ACTIONS, accountActions, lyricsActions, forYouActions, studioActions, catalogActions, shareActions, driveActions, partyActions, fitnessActions, recognizeActions, podcastActions, searchActions, recapActions, connectActions, kidsActions, metaActions, audiusActions, jamendoActions);
+const FORMS = { ...accountForms, ...lyricsForms, ...forYouForms, ...driveForms, ...podcastForms, ...searchForms, ...kidsForms, ...metaForms, ...audiusForms, ...jamendoForms };
 
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-action]');
@@ -1264,7 +1268,7 @@ document.addEventListener('submit', async (e) => {
 
 document.addEventListener('input', (e) => {
   const el = e.target;
-  if (onKidsInput(el) || onAudiusInput(el) || onConnectInput(el) || onSearchInput(el) || onLyricsInput(el) || onStudioInput(el) || onFitnessInput(el)) return;
+  if (onKidsInput(el) || onAudiusInput(el) || onJamendoInput(el) || onConnectInput(el) || onSearchInput(el) || onLyricsInput(el) || onStudioInput(el) || onFitnessInput(el)) return;
   if (el.id === 'lib-search') {
     state.libQuery = el.value;
     rerenderKeepScroll();
