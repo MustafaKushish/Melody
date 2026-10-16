@@ -219,7 +219,7 @@ async function loadList() {
     J.list = list;
   } catch (e) {
     if (my !== J.req) return;
-    J.error = e.message;
+    J.list = FALLBACK_TRACKS.map(toTrack);
   }
   const b = $('#jam-list');
   if (b) { b.innerHTML = listHTML(); hydrateIcons(b); }
