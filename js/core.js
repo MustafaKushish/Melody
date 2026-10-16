@@ -95,6 +95,13 @@ export function openSheet(html) {
   if (sheet.hidden) sheetOpener = document.activeElement !== document.body ? document.activeElement : null;
   sheet.innerHTML = html;
   hydrateIcons(sheet);
+  const titleEl = sheet.querySelector('h1, h2, h3, h4, .sheet-head .t');
+  if (titleEl) {
+    if (!titleEl.id) titleEl.id = 'sheet-title';
+    sheet.setAttribute('aria-labelledby', titleEl.id);
+  } else {
+    sheet.removeAttribute('aria-labelledby');
+  }
   sheet.hidden = false;
   $('#sheet-backdrop').hidden = false;
   const first = sheet.querySelector('input:not([type=checkbox]), textarea');
@@ -106,6 +113,7 @@ export function closeSheet(result = null) {
   const sheet = $('#sheet');
   const hadFocus = sheet.contains(document.activeElement);
   sheet.hidden = true;
+  sheet.removeAttribute('aria-labelledby');
   $('#sheet-backdrop').hidden = true;
   if (hadFocus && sheetOpener?.isConnected) sheetOpener.focus({ preventScroll: true });
   sheetOpener = null;
