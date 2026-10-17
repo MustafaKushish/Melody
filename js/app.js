@@ -532,7 +532,7 @@ function stationRows(list) {
       <div class="cover sm">${s.favicon ? `<img src="${esc(s.favicon)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${icon('radio')}</div>
       <div class="meta"><div class="t">${esc(s.name)}</div>
         <div class="a">${esc([s.country, s.tags, s.bitrate ? s.bitrate + ' kbps' : ''].filter(Boolean).join(' · '))}</div></div>
-      <button class="icon-btn${fav ? ' fav' : ''}" data-action="radio-fav" data-sid="${esc(s.id)}" aria-label="Favorit">${icon(fav ? 'heart' : 'heartOutline')}</button>
+      <button class="icon-btn${fav ? ' fav' : ''}" data-action="radio-fav" data-sid="${esc(s.id)}" aria-label="${fav ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}" aria-pressed="${fav ? 'true' : 'false'}">${icon(fav ? 'heart' : 'heartOutline')}</button>
     </div>`;
   }).join('')}</div>`;
 }
@@ -612,7 +612,8 @@ function viewSettings() {
       </div>
     </div>
     <div class="panel"><h3>Tastenkürzel</h3>
-      <p>Leertaste: Play/Pause · ←/→: 10 s spulen · Umschalt + ←/→: Titel zurück/vor · F: Favorit · ↑/↓: Lautstärke · / oder Strg+K: Suchen · S: Song erkennen · ?: Alle Kürzel</p></div>
+      <p>Leertaste: Play/Pause · ←/→: 10 s spulen · Umschalt + ←/→: Titel zurück/vor · F: Favorit · ↑/↓: Lautstärke · / oder Strg+K: Suchen · S: Song erkennen · ?: Alle Kürzel</p>
+      <button class="btn" data-action="shortcuts" style="margin-top:8px">${icon('settings')}Alle Tastenkürzel anzeigen</button></div>
     <div class="panel"><h3>Über Melody</h3>
       <p>Deine Musik bleibt auf deinem Gerät. Melody sammelt keine Daten und zeigt niemals Werbung. Radiosender stammen aus dem freien Verzeichnis radio-browser.info.</p></div>`;
 }
@@ -874,6 +875,8 @@ function updatePlayerUI() {
   const npFav = $('#np-fav');
   npFav.hidden = radio;
   npFav.classList.toggle('fav', fav);
+  npFav.setAttribute('aria-label', fav ? 'Aus Lieblingssongs entfernen' : 'Zu Lieblingssongs hinzufügen');
+  npFav.setAttribute('aria-pressed', fav ? 'true' : 'false');
   setIcon(npFav, fav ? 'heart' : 'heartOutline');
   document.querySelectorAll('[data-action=shuffle], [data-action=repeat], [data-action=prev], [data-action=next], #np-seek, .np-extra [data-action=speed-menu]')
     .forEach((el) => { el.disabled = radio; el.style.opacity = radio ? '.35' : ''; });
@@ -919,10 +922,15 @@ function updateState() {
     setIcon(b, playing ? 'pause' : 'play');
     b.setAttribute('aria-label', playing ? 'Pause' : 'Abspielen');
   }
-  for (const id of ['#pb-shuffle', '#np-shuffle']) $(id).classList.toggle('on', player.shuffle);
+  for (const id of ['#pb-shuffle', '#np-shuffle']) {
+    const b = $(id);
+    b.classList.toggle('on', player.shuffle);
+    b.setAttribute('aria-pressed', player.shuffle ? 'true' : 'false');
+  }
   for (const id of ['#pb-repeat', '#np-repeat']) {
     const b = $(id);
     b.classList.toggle('on', player.repeat !== 'off');
+    b.setAttribute('aria-pressed', player.repeat !== 'off' ? 'true' : 'false');
     setIcon(b, player.repeat === 'one' ? 'repeatOne' : 'repeat');
   }
   $('#np-speed').textContent = String(player.mode === 'podcast' ? player.settings.podRate || 1 : player.settings.rate).replace('.', ',') + '×';
