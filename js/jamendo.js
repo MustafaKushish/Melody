@@ -1,11 +1,13 @@
 // Jamendo Music API Integration (jamendo.com)
 // Over 600,000 free royalty-free tracks for streaming.
 import { icon, hydrateIcons } from './icons.js';
-import { $, esc, state, hooks, coverHTML } from './core.js';
+import { $, esc, state, hooks } from './core.js';
 import { player } from './player.js';
 
-// Default public client ID for Jamendo REST API v3.0 (users can also provide their own client ID)
-const DEFAULT_CLIENT_ID = 'c7e871bf';
+// Jamendo REST API v3.0 needs a personal client ID (free at https://devportal.jamendo.com).
+// It is stored per device in localStorage; there is no shared public ID.
+const KEY_STORE = 'melody.jamendo_client_id';
+const DEVPORTAL = 'https://devportal.jamendo.com';
 export const JAMENDO_PREFIX = 'jam:';
 
 export const JAMENDO_GENRES = [
@@ -14,8 +16,14 @@ export const JAMENDO_GENRES = [
   ['metal', 'Metal'], ['latin', 'Latin'], ['reggae', 'Reggae'], ['folk', 'Folk'],
 ];
 
+function readKey() {
+  try { return localStorage.getItem(KEY_STORE) || ''; } catch { return ''; }
+}
+
+class KeyError extends Error {}
+
 const J = {
-  clientId: localStorage.getItem('melody.jamendo_client_id') || DEFAULT_CLIENT_ID,
+  clientId: readKey(),
   genre: '',
   list: null,
   error: '',
@@ -25,6 +33,7 @@ const J = {
 };
 
 async function get(path, params = {}) {
+  if (!J.clientId) throw new KeyError('Für Jamendo fehlt noch deine Client-ID.');
   const u = new URL('https://api.jamendo.com/v3.0' + path);
   u.searchParams.set('client_id', J.clientId);
   u.searchParams.set('format', 'json');
@@ -42,12 +51,15 @@ async function get(path, params = {}) {
     if (!r.ok) throw new Error(`Jamendo antwortet nicht (${r.status}).`);
     const res = await r.json();
     if (res.headers && res.headers.status !== 'success') {
+      // Code 5 = invalid / unauthorized client ID
+      if (res.headers.code === 5) throw new KeyError('Jamendo lehnt die Client-ID ab. Bitte prüfe sie.');
       throw new Error(res.headers.error_message || 'Jamendo API Fehler');
     }
     const data = res.results;
     J.cache.set(key, { t: Date.now(), data });
     return data;
   } catch (e) {
+    if (e instanceof KeyError) throw e;
     throw new Error(e.name === 'AbortError' ? 'Jamendo antwortet gerade nicht.' : e.message === 'Failed to fetch' ? 'Jamendo ist gerade nicht erreichbar.' : e.message);
   } finally {
     clearTimeout(timer);
@@ -127,7 +139,14 @@ export function viewJamendo() {
     ${note}`;
 }
 
+function keyFormHTML(msg) {
+  return `<div class="empty">${icon('cloud')}<div>${esc(msg)}</div>
+    <div class="muted small">Hol dir kostenlos eine Client-ID im <a href="${DEVPORTAL}" target="_blank" rel="noopener">Jamendo Developer Portal</a> (Konto anlegen, „Create App“) und füge sie hier ein.</div>
+    <form class="row" data-form="jamendo-key"><input class="input" id="jam-key" placeholder="Client-ID, z. B. 1a2b3c4d" autocomplete="off" spellcheck="false" value="${esc(J.clientId)}"><button class="btn" type="submit">Speichern</button></form></div>`;
+}
+
 function listHTML() {
+  if (J.keyError) return keyFormHTML(J.keyError);
   if (J.error) return `<div class="empty">${icon('cloud')}<div>${esc(J.error)}</div><button class="btn" data-action="jam-retry">Erneut versuchen</button></div>`;
   if (!J.list) return `<div class="aud-loading">${Array.from({ length: 6 }, () => '<div class="aud-skel"></div>').join('')}</div>`;
   if (!J.list.length) return '<div class="empty">In diesem Genre wurden keine Titel gefunden.</div>';
@@ -137,6 +156,7 @@ function listHTML() {
 async function loadList() {
   const my = ++J.req;
   J.error = '';
+  J.keyError = '';
   J.list = null;
   const box = $('#jam-list');
   if (box) { box.innerHTML = listHTML(); hydrateIcons(box); }
@@ -146,21 +166,22 @@ async function loadList() {
     J.list = list;
   } catch (e) {
     if (my !== J.req) return;
-    J.error = e.message;
+    if (e instanceof KeyError) J.keyError = e.message;
+    else J.error = e.message;
   }
   const b = $('#jam-list');
   if (b) { b.innerHTML = listHTML(); hydrateIcons(b); }
 }
 
 export function afterJamendoRender() {
-  if (!J.list || J.error) loadList();
+  if (!J.list || J.error || J.keyError) loadList();
 }
 
 let searchTimer = 0, searchReq = 0;
 export function searchInto(q, el) {
   clearTimeout(searchTimer);
   if (!el) return;
-  if (!q || q.length < 2 || !navigator.onLine) { el.innerHTML = ''; return; }
+  if (!q || q.length < 2 || !navigator.onLine || !J.clientId) { el.innerHTML = ''; return; }
   el.innerHTML = `<section class="sr-sec"><h2>Jamendo Musik</h2><div class="aud-loading small">${Array.from({ length: 3 }, () => '<div class="aud-skel"></div>').join('')}</div></section>`;
   const my = ++searchReq;
   searchTimer = setTimeout(async () => {
@@ -170,6 +191,7 @@ export function searchInto(q, el) {
       el.innerHTML = list.length ? `<section class="sr-sec"><h2>Jamendo Musik</h2>${hooks.trackRows(list, { noAlbum: false, jamendo: true })}</section>` : '';
     } catch (e) {
       if (my !== searchReq || !el.isConnected) return;
+      if (e instanceof KeyError && el.id === 'sr-jamendo') { el.innerHTML = ''; return; }
       el.innerHTML = `<section class="sr-sec"><h2>Jamendo Musik</h2><p class="muted small">${esc(e.message)}</p></section>`;
     }
     hydrateIcons(el);
@@ -186,6 +208,13 @@ export const jamendoActions = {
 };
 
 export const jamendoForms = {
+  'jamendo-key': (form) => {
+    const v = form.querySelector('#jam-key').value.trim();
+    J.clientId = v;
+    try { v ? localStorage.setItem(KEY_STORE, v) : localStorage.removeItem(KEY_STORE); } catch { /* storage blocked */ }
+    J.cache.clear();
+    loadList();
+  },
   'jamendo-search': (form) => {
     const q = form.querySelector('#jam-q').value.trim();
     const box = $('#jam-search');
