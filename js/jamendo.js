@@ -5,9 +5,12 @@ import { $, esc, state, hooks } from './core.js';
 import { player } from './player.js';
 
 // Jamendo REST API v3.0 needs a personal client ID (free at https://devportal.jamendo.com).
-// It is stored per device in localStorage; there is no shared public ID.
+// A deploy-time default can be baked in; users can override it per device (localStorage).
 const KEY_STORE = 'melody.jamendo_client_id';
 const DEVPORTAL = 'https://devportal.jamendo.com';
+// Replaced at deploy time by the Pages workflow with the JAMENDO_CLIENT_ID secret.
+const BUILD_CLIENT_ID = '__JAMENDO_CLIENT_ID__';
+const DEFAULT_CLIENT_ID = BUILD_CLIENT_ID.startsWith('__') ? '' : BUILD_CLIENT_ID;
 export const JAMENDO_PREFIX = 'jam:';
 
 export const JAMENDO_GENRES = [
@@ -17,7 +20,7 @@ export const JAMENDO_GENRES = [
 ];
 
 function readKey() {
-  try { return localStorage.getItem(KEY_STORE) || ''; } catch { return ''; }
+  try { return localStorage.getItem(KEY_STORE) || DEFAULT_CLIENT_ID; } catch { return DEFAULT_CLIENT_ID; }
 }
 
 class KeyError extends Error {}
