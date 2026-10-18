@@ -924,13 +924,18 @@ function updateState() {
   }
   for (const id of ['#pb-shuffle', '#np-shuffle']) {
     const b = $(id);
+    if (!b) continue;
     b.classList.toggle('on', player.shuffle);
     b.setAttribute('aria-pressed', player.shuffle ? 'true' : 'false');
+    b.setAttribute('aria-label', player.shuffle ? 'Zufallswiedergabe: An' : 'Zufallswiedergabe: Aus');
   }
   for (const id of ['#pb-repeat', '#np-repeat']) {
     const b = $(id);
+    if (!b) continue;
     b.classList.toggle('on', player.repeat !== 'off');
     b.setAttribute('aria-pressed', player.repeat !== 'off' ? 'true' : 'false');
+    const label = { off: 'Wiederholen: Aus', all: 'Wiederholen: Alle Titel', one: 'Wiederholen: Aktueller Titel' }[player.repeat] || 'Wiederholen';
+    b.setAttribute('aria-label', label);
     setIcon(b, player.repeat === 'one' ? 'repeatOne' : 'repeat');
   }
   $('#np-speed').textContent = String(player.mode === 'podcast' ? player.settings.podRate || 1 : player.settings.rate).replace('.', ',') + '×';
