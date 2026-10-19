@@ -29,10 +29,11 @@ jobs:
           JAMENDO_CLIENT_ID: ${{ secrets.JAMENDO_KEY }}
         run: |
           bash tools/build-demo.sh _site
-          if [ -n "$JAMENDO_CLIENT_ID" ]; then
-            sed -i "s/__JAMENDO_CLIENT_ID__/${JAMENDO_CLIENT_ID//[^A-Za-z0-9]/}/" _site/js/jamendo.js
+          # Eine Jamendo-Client-ID hat 8 Zeichen (a-f, 0-9). Längere Werte sind das „Client Secret“ und gehören nie in die Seite.
+          if [[ "$JAMENDO_CLIENT_ID" =~ ^[0-9a-f]{8}$ ]]; then
+            sed -i "s/__JAMENDO_CLIENT_ID__/${JAMENDO_CLIENT_ID}/" _site/js/jamendo.js
           else
-            echo "::warning::Secret JAMENDO_KEY fehlt – Jamendo fragt im Browser nach der Client-ID."
+            echo "::warning::Secret JAMENDO_KEY fehlt oder ist keine Jamendo-Client-ID (8 Zeichen) – Jamendo fragt im Browser nach der Client-ID."
           fi
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
