@@ -1,5 +1,5 @@
 // Offline support: the app shell is cached; everything else (radio API, streams) goes to the network.
-const CACHE = 'melody-v18';
+const CACHE = 'melody-v19';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/style.css', 'css/design.css',
   'js/app.js', 'js/db.js', 'js/icons.js', 'js/player.js', 'js/tags.js',

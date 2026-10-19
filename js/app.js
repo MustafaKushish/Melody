@@ -98,8 +98,7 @@ const NAV = [
   { id: 'home', label: 'Start', icon: 'home', mobile: true },
   { id: 'search', label: 'Suchen', icon: 'search', mobile: true },
   { id: 'discover', label: 'Entdecken', icon: 'explore' },
-  { id: 'audius', label: 'Freie Musik (Audius)', icon: 'globe' },
-  { id: 'jamendo', label: 'Freie Musik (Jamendo)', icon: 'note' },
+  { id: 'audius', label: 'Freie Musik', icon: 'globe' },
   { id: 'podcasts', label: 'Podcasts', icon: 'podcast', mobile: true },
   { id: 'foryou', label: 'Für dich', icon: 'sparkle' },
   { id: 'library', label: 'Bibliothek', icon: 'library', mobile: true },
@@ -133,10 +132,16 @@ function parseRoute() {
   state.route = { view: view || 'home', param: decodeURIComponent(rest.join('/') || ''), query: new URLSearchParams(query) };
 }
 
+// Audius and Jamendo share one menu entry; this switches between the two sources.
+function freeMusicTabs(active) {
+  return `<div class="tabs free-tabs" role="tablist">${[['audius', 'Audius'], ['jamendo', 'Jamendo']].map(([id, label]) =>
+    `<button class="chip${id === active ? ' on' : ''}" role="tab" aria-selected="${id === active}" data-action="nav" data-view="${id}">${label}</button>`).join('')}</div>`;
+}
+
 const VIEWS = {
   home: viewHome,
-  audius: viewAudius,
-  jamendo: viewJamendo,
+  audius: () => freeMusicTabs('audius') + viewAudius(),
+  jamendo: () => freeMusicTabs('jamendo') + viewJamendo(),
   library: viewLibrary,
   album: viewAlbum,
   artist: viewArtist,
@@ -172,7 +177,7 @@ function render() {
   if (key !== lastViewKey) { main.classList.remove('view-enter'); void main.offsetWidth; main.classList.add('view-enter'); lastViewKey = key; }
   const fab = $('#rc-fab');
   if (fab) { fab.hidden = view === 'recognize'; fab.classList.remove('away'); }
-  const navView = { album: 'library', artist: 'library', playlist: 'playlists', premium: 'account', shared: 'playlists', podcast: 'podcasts' }[view] || view;
+  const navView = { jamendo: 'audius', album: 'library', artist: 'library', playlist: 'playlists', premium: 'account', shared: 'playlists', podcast: 'podcasts' }[view] || view;
   document.querySelectorAll('.nav-item').forEach((el) => {
     const on = el.dataset.view === navView;
     el.classList.toggle('active', on);
@@ -296,8 +301,7 @@ function viewHome() {
         <button class="btn btn-primary" data-action="import">${icon('upload')}Musik importieren</button>
         <button class="btn hide-sm" data-action="import-folder">${icon('folder')}Ordner importieren</button>
         <button class="btn" data-action="nav" data-view="discover">${icon('explore')}Songs entdecken</button>
-        <button class="btn" data-action="nav" data-view="audius">${icon('globe')}Audius Musik</button>
-        <button class="btn" data-action="nav" data-view="jamendo">${icon('note')}Jamendo Musik</button>
+        <button class="btn" data-action="nav" data-view="audius">${icon('globe')}Freie Musik</button>
       </div>
       ${DEMO ? '<p class="demo-note" style="margin-top:16px">Demo-Version: Tippe auf „Songs entdecken“ und spiele die Melody-Songs ab – mit Lyrics zum Mitsingen. Du kannst auch eigene Musikdateien importieren.</p>' : ''}
       <div id="home-catalog"></div>
