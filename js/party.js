@@ -22,7 +22,9 @@ function render() {
   $('#pt-cover').innerHTML = t ? coverHTML(t, 'pt-art') : `<div class="cover pt-art" style="--h:${hue('party')}">${icon('note')}</div>`;
   $('#pt-title').textContent = t?.title || player.station?.name || 'Party-Modus';
   $('#pt-artist').textContent = t?.artist || '';
-  setIcon($('#pt-play'), player.playing ? 'pause' : 'play');
+  const ptPlay = $('#pt-play');
+  setIcon(ptPlay, player.playing ? 'pause' : 'play');
+  ptPlay.setAttribute('aria-label', player.playing ? 'Pause' : 'Abspielen');
   const next = getTrack(player.queue[player.index + 1]);
   $('#pt-next').innerHTML = next ? `Als Nächstes: <b>${esc(next.title)}</b> · ${esc(next.artist)}` : '';
 }
@@ -105,9 +107,9 @@ export async function openParty() {
     <div class="pt-bottom">
       <div class="pt-next" id="pt-next"></div>
       <div class="pt-controls">
-        <button class="icon-btn lg" data-action="prev">${icon('prev')}</button>
-        <button class="icon-btn play xl" id="pt-play" data-action="toggle">${icon('play')}</button>
-        <button class="icon-btn lg" data-action="next">${icon('next')}</button>
+        <button class="icon-btn lg" data-action="prev" aria-label="Zurück">${icon('prev')}</button>
+        <button class="icon-btn play xl" id="pt-play" data-action="toggle" aria-label="Abspielen">${icon('play')}</button>
+        <button class="icon-btn lg" data-action="next" aria-label="Weiter">${icon('next')}</button>
       </div>
       <div class="pt-pads">
         <button class="chip${P.lights ? ' on' : ''}" data-action="party-lights">Lichtshow</button>
