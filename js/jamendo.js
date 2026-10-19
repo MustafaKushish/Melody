@@ -8,7 +8,7 @@ import { player } from './player.js';
 // A deploy-time default can be baked in; users can override it per device (localStorage).
 const KEY_STORE = 'melody.jamendo_client_id';
 const DEVPORTAL = 'https://devportal.jamendo.com';
-// Replaced at deploy time by the Pages workflow with the JAMENDO_CLIENT_ID secret.
+// Replaced at deploy time by the Pages workflow with the JAMENDO_KEY secret.
 const BUILD_CLIENT_ID = '__JAMENDO_CLIENT_ID__';
 const DEFAULT_CLIENT_ID = BUILD_CLIENT_ID.startsWith('__') ? '' : BUILD_CLIENT_ID;
 export const JAMENDO_PREFIX = 'jam:';

@@ -26,13 +26,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Web-App bauen
         env:
-          JAMENDO_CLIENT_ID: ${{ secrets.JAMENDO_CLIENT_ID }}
+          JAMENDO_CLIENT_ID: ${{ secrets.JAMENDO_KEY }}
         run: |
           bash tools/build-demo.sh _site
           if [ -n "$JAMENDO_CLIENT_ID" ]; then
             sed -i "s/__JAMENDO_CLIENT_ID__/${JAMENDO_CLIENT_ID//[^A-Za-z0-9]/}/" _site/js/jamendo.js
           else
-            echo "::warning::Secret JAMENDO_CLIENT_ID fehlt – Jamendo fragt im Browser nach der Client-ID."
+            echo "::warning::Secret JAMENDO_KEY fehlt – Jamendo fragt im Browser nach der Client-ID."
           fi
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
