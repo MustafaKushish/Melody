@@ -251,9 +251,12 @@ function epRow(pod, ep, showPod = false) {
   const dl = P.downloads[ep.guid];
   const busy = P.active.has(ep.guid);
   const left = prog && !prog.done && prog.dur ? `noch ${fmtDur(prog.dur - prog.pos)}` : fmtDur(ep.duration);
+  const playLabel = `${playing && player.playing ? 'Pausieren' : 'Abspielen'}: ${esc(ep.title)}`;
+  const dlLabel = `${dl ? 'Download entfernen' : 'Herunterladen'}: ${esc(ep.title)}`;
+  const markLabel = `${prog?.done ? 'Als ungehört markieren' : 'Als gehört markieren'}: ${esc(ep.title)}`;
   return `<div class="ep${playing ? ' current' : ''}${prog?.done ? ' done' : ''}" data-guid="${esc(ep.guid)}">
     ${showPod ? podCover(pod, 'sm') : ''}
-    <button class="ep-play" data-action="pod-play" data-feed="${esc(pod.feed)}" data-guid="${esc(ep.guid)}" aria-label="Abspielen">${icon(playing && player.playing ? 'pause' : 'play')}</button>
+    <button class="ep-play" data-action="pod-play" data-feed="${esc(pod.feed)}" data-guid="${esc(ep.guid)}" aria-label="${playLabel}">${icon(playing && player.playing ? 'pause' : 'play')}</button>
     <div class="ep-meta">
       <div class="ep-sub">${showPod ? `${esc(pod.title)} · ` : ''}${fmtDay(ep.date)}${ep.type.startsWith('video/') ? ' · Video' : ''}</div>
       <div class="ep-title">${esc(ep.title)}</div>
@@ -262,9 +265,9 @@ function epRow(pod, ep, showPod = false) {
         ${pct > 0 && !prog?.done ? `<span class="ep-bar"><i style="width:${pct.toFixed(1)}%"></i></span>` : ''}
         ${dl ? `<span class="ok">${icon('downloadDone')} Offline</span>` : ''}</div>
     </div>
-    <button class="icon-btn" data-action="${dl ? 'pod-undl' : 'pod-dl'}" data-feed="${esc(pod.feed)}" data-guid="${esc(ep.guid)}" aria-label="${dl ? 'Download entfernen' : 'Herunterladen'}">
+    <button class="icon-btn" data-action="${dl ? 'pod-undl' : 'pod-dl'}" data-feed="${esc(pod.feed)}" data-guid="${esc(ep.guid)}" aria-label="${dlLabel}">
       ${busy ? `<span class="dl-badge busy">${Math.round((P.active.get(ep.guid) || 0) * 100)}%</span>` : icon(dl ? 'downloadDone' : 'download')}</button>
-    <button class="icon-btn" data-action="pod-mark" data-guid="${esc(ep.guid)}" data-feed="${esc(pod.feed)}" aria-label="${prog?.done ? 'Als ungehört markieren' : 'Als gehört markieren'}">${icon(prog?.done ? 'close' : 'check')}</button>
+    <button class="icon-btn" data-action="pod-mark" data-guid="${esc(ep.guid)}" data-feed="${esc(pod.feed)}" aria-label="${markLabel}">${icon(prog?.done ? 'close' : 'check')}</button>
   </div>`;
 }
 
