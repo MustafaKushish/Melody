@@ -230,7 +230,7 @@ function trackRows(tracks, opts = {}) {
         <div class="a">${t.favorite ? `<span class="heart">♥</span> ` : ''}${esc(t.artist)}${opts.noAlbum ? '' : ' · ' + esc(t.album)}</div>
       </div>
       <span class="dur"><span class="dl-slot">${statusBadge(t)}</span> ${fmt(t.duration)}</span>
-      <button class="icon-btn" data-action="track-menu" data-id="${t.id}" data-pl="${esc(opts.playlistId || '')}" data-index="${i}" aria-label="Optionen">${icon('more')}</button>
+      <button class="icon-btn" data-action="track-menu" data-id="${t.id}" data-pl="${esc(opts.playlistId || '')}" data-index="${i}" aria-label="Optionen für ${esc(t.title)}">${icon('more')}</button>
     </div>`).join('')}</div>`;
 }
 
