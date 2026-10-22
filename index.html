@@ -43,19 +43,19 @@
       <span class="eq-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
     </div>
     <div class="pb-center">
-      <button class="icon-btn hide-sm" data-action="shuffle" id="pb-shuffle" aria-label="Zufallswiedergabe" data-icon="shuffle"></button>
-      <button class="icon-btn hide-sm" data-action="prev" aria-label="Zurück" data-icon="prev"></button>
-      <button class="icon-btn cn-btn sm-only" data-action="connect" aria-label="Geräte (Melody Connect)" data-icon="devices"></button>
-      <button class="icon-btn play" data-action="toggle" id="pb-play" aria-label="Abspielen" data-icon="play"></button>
-      <button class="icon-btn" data-action="next" aria-label="Weiter" data-icon="next"></button>
-      <button class="icon-btn hide-sm" data-action="repeat" id="pb-repeat" aria-label="Wiederholen" data-icon="repeat"></button>
+      <button class="icon-btn hide-sm" data-action="shuffle" id="pb-shuffle" aria-label="Zufallswiedergabe" title="Zufallswiedergabe" data-icon="shuffle"></button>
+      <button class="icon-btn hide-sm" data-action="prev" aria-label="Zurück" title="Zurück" data-icon="prev"></button>
+      <button class="icon-btn cn-btn sm-only" data-action="connect" aria-label="Geräte (Melody Connect)" title="Geräte (Melody Connect)" data-icon="devices"></button>
+      <button class="icon-btn play" data-action="toggle" id="pb-play" aria-label="Abspielen" title="Abspielen" data-icon="play"></button>
+      <button class="icon-btn" data-action="next" aria-label="Weiter" title="Weiter" data-icon="next"></button>
+      <button class="icon-btn hide-sm" data-action="repeat" id="pb-repeat" aria-label="Wiederholen" title="Wiederholen" data-icon="repeat"></button>
     </div>
     <div class="pb-right hide-sm">
       <span class="time" id="pb-time">0:00 / 0:00</span>
-      <button class="icon-btn cn-btn" data-action="connect" aria-label="Geräte (Melody Connect)" data-icon="devices"></button>
-      <button class="icon-btn" data-action="queue" aria-label="Warteschlange" data-icon="queue"></button>
-      <span data-icon="volume" class="vol-ico"></span>
-      <input type="range" id="pb-volume" min="0" max="1" step="0.01" aria-label="Lautstärke">
+      <button class="icon-btn cn-btn" data-action="connect" aria-label="Geräte (Melody Connect)" title="Geräte (Melody Connect)" data-icon="devices"></button>
+      <button class="icon-btn" data-action="queue" aria-label="Warteschlange" title="Warteschlange" data-icon="queue"></button>
+      <button class="icon-btn vol-btn" data-action="mute" id="pb-vol-btn" aria-label="Stummschalten" aria-pressed="false" title="Stummschalten (Taste M)"><span data-icon="volume" id="pb-vol-ico"></span></button>
+      <input type="range" id="pb-volume" min="0" max="1" step="0.01" aria-label="Lautstärke" title="Lautstärke">
     </div>
   </footer>
 
