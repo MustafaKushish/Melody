@@ -695,7 +695,7 @@ function queueSheet() {
 
 function shortcutsSheet() {
   const keys = [['Leertaste', 'Abspielen / Pause'], ['← / →', '10 Sekunden zurück / vor (Podcasts: 15 / 30)'],
-    ['Umschalt + ← / →', 'Vorheriger / nächster Titel'], ['↑ / ↓', 'Lauter / leiser'], ['F', 'Lieblingssong an / aus'],
+    ['Umschalt + ← / →', 'Vorheriger / nächster Titel'], ['↑ / ↓', 'Lauter / leiser'], ['M', 'Stummschalten / Ton einschalten'], ['F', 'Lieblingssong an / aus'],
     ['/ oder Strg + K', 'Suchen'], ['S', 'Song erkennen'], ['Esc', 'Schließen'], ['Tab / Umschalt + Tab', 'Zum nächsten / vorigen Bedienelement'],
     ['↑ / ↓ am Griff', 'Titel in Playlist oder Warteschlange verschieben'], ['?', 'Diese Übersicht']];
   openSheet(`<h3>Tastenkürzel</h3><dl class="keys">${keys.map(([k, d]) => `<div><dt><kbd>${k}</kbd></dt><dd>${d}</dd></div>`).join('')}</dl>`);
@@ -843,6 +843,38 @@ async function importFiles(fileList) {
 
 // ---------- Player UI ----------
 let seeking = false;
+let lastVol = 1;
+
+function updateVolumeUI() {
+  const v = player.settings.volume;
+  const muted = v === 0;
+  const volInput = $('#pb-volume');
+  if (volInput) {
+    volInput.value = v;
+    setRangeP(volInput);
+  }
+  const btn = $('#pb-vol-btn');
+  if (btn) {
+    const label = muted ? 'Ton einschalten' : 'Stummschalten';
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+    btn.setAttribute('title', muted ? 'Ton einschalten (Taste M)' : 'Stummschalten (Taste M)');
+    const ico = $('#pb-vol-ico');
+    if (ico) setIcon(ico, muted ? 'volumeMute' : 'volume');
+  }
+}
+
+function toggleMute() {
+  if (player.settings.volume > 0) {
+    lastVol = player.settings.volume;
+    player.setVolume(0);
+    toast('Stummgeschaltet');
+  } else {
+    player.setVolume(lastVol || 0.8);
+    toast('Ton eingeschaltet');
+  }
+  updateVolumeUI();
+}
 
 function updatePlayerUI() {
   if (player.mode === 'podcast') return updatePodcastUI();
@@ -879,13 +911,16 @@ function updatePlayerUI() {
   const npFav = $('#np-fav');
   npFav.hidden = radio;
   npFav.classList.toggle('fav', fav);
-  npFav.setAttribute('aria-label', fav ? 'Aus Lieblingssongs entfernen' : 'Zu Lieblingssongs hinzufügen');
+  const favLabel = fav ? 'Aus Lieblingssongs entfernen' : 'Zu Lieblingssongs hinzufügen';
+  npFav.setAttribute('aria-label', favLabel);
+  npFav.setAttribute('title', favLabel);
   npFav.setAttribute('aria-pressed', fav ? 'true' : 'false');
   setIcon(npFav, fav ? 'heart' : 'heartOutline');
   document.querySelectorAll('[data-action=shuffle], [data-action=repeat], [data-action=prev], [data-action=next], #np-seek, .np-extra [data-action=speed-menu]')
     .forEach((el) => { el.disabled = radio; el.style.opacity = radio ? '.35' : ''; });
   updateState();
   updateTime();
+  updateVolumeUI();
   markCurrent();
 }
 
@@ -924,14 +959,18 @@ function updateState() {
   for (const id of ['#pb-play', '#np-play']) {
     const b = $(id);
     setIcon(b, playing ? 'pause' : 'play');
-    b.setAttribute('aria-label', playing ? 'Pause' : 'Abspielen');
+    const label = playing ? 'Pause' : 'Abspielen';
+    b.setAttribute('aria-label', label);
+    b.setAttribute('title', label);
   }
   for (const id of ['#pb-shuffle', '#np-shuffle']) {
     const b = $(id);
     if (!b) continue;
     b.classList.toggle('on', player.shuffle);
     b.setAttribute('aria-pressed', player.shuffle ? 'true' : 'false');
-    b.setAttribute('aria-label', player.shuffle ? 'Zufallswiedergabe: An' : 'Zufallswiedergabe: Aus');
+    const label = player.shuffle ? 'Zufallswiedergabe: An' : 'Zufallswiedergabe: Aus';
+    b.setAttribute('aria-label', label);
+    b.setAttribute('title', label);
   }
   for (const id of ['#pb-repeat', '#np-repeat']) {
     const b = $(id);
@@ -940,6 +979,7 @@ function updateState() {
     b.setAttribute('aria-pressed', player.repeat !== 'off' ? 'true' : 'false');
     const label = { off: 'Wiederholen: Aus', all: 'Wiederholen: Alle Titel', one: 'Wiederholen: Aktueller Titel' }[player.repeat] || 'Wiederholen';
     b.setAttribute('aria-label', label);
+    b.setAttribute('title', label);
     setIcon(b, player.repeat === 'one' ? 'repeatOne' : 'repeat');
   }
   $('#np-speed').textContent = String(player.mode === 'podcast' ? player.settings.podRate || 1 : player.settings.rate).replace('.', ',') + '×';
@@ -1089,6 +1129,7 @@ const ACTIONS = {
   next: () => player.next(),
   prev: () => player.prev(),
   shuffle: () => player.setShuffle(!player.shuffle),
+  mute: () => toggleMute(),
   repeat: () => {
     player.cycleRepeat();
     toast({ off: 'Wiederholen aus', all: 'Alle wiederholen', one: 'Titel wiederholen' }[player.repeat]);
@@ -1301,7 +1342,7 @@ document.addEventListener('input', (e) => {
     setRangeP(el);
   } else if (el.id === 'pb-volume') {
     player.setVolume(+el.value);
-    setRangeP(el);
+    updateVolumeUI();
   } else if (el.id === 'np-seek') {
     seeking = true;
     const d = player.media.duration || 0;
@@ -1365,6 +1406,7 @@ document.addEventListener('keydown', (e) => {
     setRangeP(vol);
     toast(`Lautstärke ${Math.round(v * 100)} %`);
   } else if (e.key.toLowerCase() === 'f' && !radio) toggleFav(player.track);
+  else if (e.key.toLowerCase() === 'm') toggleMute();
   else if (e.key.toLowerCase() === 's') recognizeListen();
 });
 
@@ -1427,7 +1469,7 @@ hooks.play = (ids, i) => player.playList(ids, i);
 hooks.toggleFav = toggleFav;
 hooks.prompt = promptSheet;
 hooks.sheetClosed = onSheetClosed;
-hooks.syncVolume = () => { const v = $('#pb-volume'); if (v) { v.value = player.settings.volume; setRangeP(v); } };
+hooks.syncVolume = () => updateVolumeUI();
 hooks.accountChanged = (a) => (a?.access && !a.offline ? startConnect() : stopConnect());
 hooks.sing = openSing;
 hooks.recognize = () => recognizeListen();
