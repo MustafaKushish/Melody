@@ -848,9 +848,12 @@ let lastVol = 1;
 function updateVolumeUI() {
   const v = player.settings.volume;
   const muted = v === 0;
+  const percent = Math.round(v * 100);
   const volInput = $('#pb-volume');
   if (volInput) {
     volInput.value = v;
+    volInput.setAttribute('aria-valuenow', percent);
+    volInput.setAttribute('aria-valuetext', `${percent}%`);
     setRangeP(volInput);
   }
   const btn = $('#pb-vol-btn');
