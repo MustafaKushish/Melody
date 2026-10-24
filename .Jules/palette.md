@@ -9,3 +9,7 @@
 ## 2026-10-20 - Contextual ARIA Labels for Repeated List Action Buttons
 **Learning:** Icon-only action buttons rendered in repetitive list rows (such as episode play/download/mark buttons) need to include the item title in `aria-label` (and reflect state, e.g. "Pausieren: [Title]" vs "Abspielen: [Title]") so screen reader users hear clear context rather than ambiguous repeated actions.
 **Action:** Append the item title (`esc(item.title)`) to action verb descriptions when generating HTML string templates for list item action buttons.
+
+## 2026-10-24 - Static ARIA Labels with Dynamic ARIA Value Text for Range Inputs
+**Learning:** Range inputs (`<input type="range">`) should keep a static `aria-label` (e.g. "Lautstärke") and use `aria-valuenow` / `aria-valuetext` for value updates to prevent redundant announcements in screen readers.
+**Action:** Avoid interpolating current values into `aria-label` on range controls when `aria-valuetext` is already configured.
