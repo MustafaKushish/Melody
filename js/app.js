@@ -998,8 +998,12 @@ function updateTime() {
     $('#np-cur').innerHTML = '<span class="live">Live</span>';
     $('#np-dur').textContent = '';
     const s = $('#np-seek');
-    s.value = 1000;
-    setRangeP(s);
+    if (s) {
+      s.value = 1000;
+      s.setAttribute('aria-valuenow', '1000');
+      s.setAttribute('aria-valuetext', 'Live');
+      setRangeP(s);
+    }
     return;
   }
   const el = player.media;
@@ -1010,8 +1014,13 @@ function updateTime() {
   $('#pb-time').textContent = `${fmt(c)} / ${fmt(d)}`;
   if (!seeking) {
     const s = $('#np-seek');
-    s.value = d ? Math.round((c / d) * 1000) : 0;
-    setRangeP(s);
+    if (s) {
+      const val = d ? Math.round((c / d) * 1000) : 0;
+      s.value = val;
+      s.setAttribute('aria-valuenow', val);
+      s.setAttribute('aria-valuetext', d ? `${fmt(c)} von ${fmt(d)}` : fmt(c));
+      setRangeP(s);
+    }
     $('#np-cur').textContent = fmt(c);
   }
   $('#np-dur').textContent = fmt(d);
@@ -1349,7 +1358,10 @@ document.addEventListener('input', (e) => {
   } else if (el.id === 'np-seek') {
     seeking = true;
     const d = player.media.duration || 0;
-    $('#np-cur').textContent = fmt((el.value / 1000) * d);
+    const c = (el.value / 1000) * d;
+    $('#np-cur').textContent = fmt(c);
+    el.setAttribute('aria-valuenow', el.value);
+    el.setAttribute('aria-valuetext', d ? `${fmt(c)} von ${fmt(d)}` : fmt(c));
     setRangeP(el);
   }
 });
