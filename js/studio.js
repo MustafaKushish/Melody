@@ -44,8 +44,9 @@ function popularHTML() {
 }
 
 function slider(key, label, min, max, step, value, fmt) {
-  return `<label class="knob"><span>${label}<b id="v-${key}">${fmt(value)}</b></span>
-    <input type="range" data-dj="${key}" min="${min}" max="${max}" step="${step}" value="${value}"></label>`;
+  const text = fmt(value);
+  return `<label class="knob"><span>${label}<b id="v-${key}">${text}</b></span>
+    <input type="range" data-dj="${key}" min="${min}" max="${max}" step="${step}" value="${value}" aria-label="${label}" aria-valuenow="${value}" aria-valuetext="${text}"></label>`;
 }
 
 const FMT = {
@@ -110,7 +111,7 @@ export function viewStudio() {
       <div class="presets">${Object.keys(EQ_PRESETS).map((p) => `<button class="chip${s.preset === p ? ' on' : ''}" data-action="sound" data-preset="${p}">${p}</button>`).join('')}</div>
       <div class="eq${s.eqOn ? '' : ' off'}">${BANDS.map((f, i) => `
         <label class="eq-band"><span>${s.eq[i] > 0 ? '+' : ''}${s.eq[i]}</span>
-          <input type="range" min="-12" max="12" step="1" value="${s.eq[i]}" data-band="${i}" aria-label="${f} Hz">
+          <input type="range" min="-12" max="12" step="1" value="${s.eq[i]}" data-band="${i}" aria-label="${f} Hz" aria-valuenow="${s.eq[i]}" aria-valuetext="${(s.eq[i] > 0 ? '+' : '') + s.eq[i]} dB">
           <span>${f >= 1000 ? f / 1000 + 'k' : f}</span></label>`).join('')}</div>
     </div>`;
 }
@@ -186,7 +187,10 @@ export function onStudioInput(el) {
   else player.setDj({ [key]: v });
   if (!isIOS && !player.settings.fx && key !== 'rate' && key !== 'crossfade') player.setFx(true);
   const label = $(`#v-${key}`);
-  if (label) label.textContent = FMT[key](v);
+  const text = FMT[key](v);
+  if (label) label.textContent = text;
+  el.setAttribute('aria-valuenow', v);
+  el.setAttribute('aria-valuetext', text);
   setRangeP(el);
   if (key === 'reverb' || key === 'width') {
     document.querySelectorAll('.sound.on').forEach((b) => b.classList.remove('on'));

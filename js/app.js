@@ -1349,7 +1349,10 @@ document.addEventListener('input', (e) => {
     player.setEq(gains, 'Eigene');
     reportPreset();
     document.querySelectorAll('.sound.on').forEach((b) => b.classList.remove('on'));
+    const text = (el.value > 0 ? '+' : '') + el.value + ' dB';
     el.previousElementSibling.textContent = (el.value > 0 ? '+' : '') + el.value;
+    el.setAttribute('aria-valuenow', el.value);
+    el.setAttribute('aria-valuetext', text);
     document.querySelectorAll('#eq [data-action=sound]').forEach((c) => c.classList.remove('on'));
     setRangeP(el);
   } else if (el.id === 'pb-volume') {
