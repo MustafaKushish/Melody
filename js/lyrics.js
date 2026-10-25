@@ -180,7 +180,7 @@ export async function renderSing() {
     </div>
     <div class="sing-tools">
       ${isIOS ? '' : `<label class="sing-slider"><span>${icon('person')} Originalstimme <b id="sing-vocal-val">${sing.vocals} %</b></span>
-        <input type="range" id="sing-vocals" min="0" max="100" step="5" value="${sing.vocals}"></label>
+        <input type="range" id="sing-vocals" min="0" max="100" step="5" value="${sing.vocals}" aria-label="Originalstimme" aria-valuenow="${sing.vocals}" aria-valuetext="${sing.vocals} %"></label>
       <button class="chip${player.mic ? ' on' : ''}" data-action="sing-mic">${icon('mic')}<span>${player.mic ? 'Mikro an' : 'Mikrofon'}</span></button>`}
       <div class="mic-meter" ${player.mic ? '' : 'hidden'}><i id="mic-level"></i></div>
       <div class="sing-score" id="sing-score">${player.mic ? 'Sing los! 🎤' : ''}</div>
@@ -359,6 +359,8 @@ export function onLyricsInput(el) {
   sing.vocals = +el.value;
   player.setVocal(100 - sing.vocals);
   $('#sing-vocal-val').textContent = `${sing.vocals} %`;
+  el.setAttribute('aria-valuenow', el.value);
+  el.setAttribute('aria-valuetext', `${sing.vocals} %`);
   setRangeP(el);
   return true;
 }

@@ -620,7 +620,7 @@ function sessionHTML() {
       ${w.timer === 'run' ? `<div class="ft-run">
           <div class="ft-cadence"><b id="ft-cad">${F.cadence || '–'}</b><span>Schritte/min</span></div>
           <button class="chip${F.motion ? ' on' : ''}" data-action="fit-motion">${icon('fitness')} Schritte messen</button>
-          <label class="ft-slider">Ziel-Tempo <b id="ft-target-v">${F.targetBpm} BPM</b><input type="range" id="ft-target" min="120" max="190" step="1" value="${F.targetBpm}"></label>
+          <label class="ft-slider">Ziel-Tempo <b id="ft-target-v">${F.targetBpm} BPM</b><input type="range" id="ft-target" min="120" max="190" step="1" value="${F.targetBpm}" aria-label="Ziel-Tempo" aria-valuenow="${F.targetBpm}" aria-valuetext="${F.targetBpm} BPM"></label>
         </div>` : ''}
     </div>
     <div class="ft-player">
@@ -995,6 +995,8 @@ export function onFitnessInput(el) {
   if (el.id === 'ft-target') {
     F.targetBpm = +el.value;
     $('#ft-target-v').textContent = `${F.targetBpm} BPM`;
+    el.setAttribute('aria-valuenow', el.value);
+    el.setAttribute('aria-valuetext', `${F.targetBpm} BPM`);
     applyTempo();
     return true;
   }
