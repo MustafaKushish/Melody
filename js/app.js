@@ -893,6 +893,18 @@ function updatePlayerUI() {
   const artist = radio ? 'Live-Radio' + (player.station.tags ? ' · ' + player.station.tags : '') : t.artist;
   $('#pb-title').textContent = $('#np-title').textContent = title;
   $('#pb-artist').textContent = $('#np-artist').textContent = artist;
+  const pbLeft = $('.pb-left');
+  if (pbLeft) {
+    const npLabel = `Vollbild-Player öffnen: ${title}${artist ? ` – ${artist}` : ''}`;
+    pbLeft.setAttribute('aria-label', npLabel);
+    pbLeft.setAttribute('title', npLabel);
+  }
+  const npMenu = $('#now-playing [data-action="np-menu"]');
+  if (npMenu) {
+    const menuLabel = `Optionen für ${title}`;
+    npMenu.setAttribute('aria-label', menuLabel);
+    npMenu.setAttribute('title', menuLabel);
+  }
   const coverHtml = radio
     ? `<div class="cover" style="--h:${hue(title)}">${player.station.favicon ? `<img src="${esc(player.station.favicon)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${icon('radio')}</div>`
     : coverHTML(t);
@@ -943,6 +955,18 @@ function updatePodcastUI() {
   $('#player-bar').hidden = false;
   $('#pb-title').textContent = $('#np-title').textContent = ep.title;
   $('#pb-artist').textContent = $('#np-artist').textContent = pod.title;
+  const pbLeft = $('.pb-left');
+  if (pbLeft) {
+    const npLabel = `Vollbild-Player öffnen: ${ep.title} – ${pod.title}`;
+    pbLeft.setAttribute('aria-label', npLabel);
+    pbLeft.setAttribute('title', npLabel);
+  }
+  const npMenu = $('#now-playing [data-action="np-menu"]');
+  if (npMenu) {
+    const menuLabel = `Optionen für ${ep.title}`;
+    npMenu.setAttribute('aria-label', menuLabel);
+    npMenu.setAttribute('title', menuLabel);
+  }
   const img = ep.image || pod.image;
   setCovers(`<div class="cover" style="--h:${hue(pod.title)}">${img ? `<img src="${esc(img)}" alt="" referrerpolicy="no-referrer">` : icon('mic')}</div>`);
   $('#np-bg').style.setProperty('--h', hue(pod.title));

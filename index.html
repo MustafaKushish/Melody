@@ -34,14 +34,14 @@
   <div id="sr-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <footer id="player-bar" class="player-bar" hidden>
     <div class="pb-progress"><div class="pb-progress-fill" id="pb-fill"></div></div>
-    <div class="pb-left" data-action="open-np">
+    <button class="pb-left" data-action="open-np" aria-label="Vollbild-Player öffnen" title="Vollbild-Player öffnen">
       <div class="cover sm" id="pb-cover"></div>
       <div class="meta">
         <div class="t" id="pb-title"></div>
         <div class="a" id="pb-artist"></div>
       </div>
       <span class="eq-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-    </div>
+    </button>
     <div class="pb-center">
       <button class="icon-btn hide-sm" data-action="shuffle" id="pb-shuffle" aria-label="Zufallswiedergabe" title="Zufallswiedergabe" data-icon="shuffle"></button>
       <button class="icon-btn hide-sm" data-action="prev" aria-label="Zurück" title="Zurück" data-icon="prev"></button>
@@ -64,9 +64,9 @@
   <section id="now-playing" class="now-playing" hidden aria-label="Aktuelle Wiedergabe">
     <div class="np-bg" id="np-bg"><i></i><i></i><i></i></div>
     <header class="np-head">
-      <button class="icon-btn" data-action="close-np" aria-label="Schließen" data-icon="down"></button>
+      <button class="icon-btn" data-action="close-np" aria-label="Vollbild-Player schließen" title="Vollbild-Player schließen" data-icon="down"></button>
       <span class="np-context" id="np-context">Wird gespielt</span>
-      <button class="icon-btn" data-action="np-menu" aria-label="Mehr" data-icon="more"></button>
+      <button class="icon-btn" data-action="np-menu" aria-label="Optionen" title="Optionen" data-icon="more"></button>
     </header>
     <div class="np-art">
       <div class="np-stage" id="np-stage">
