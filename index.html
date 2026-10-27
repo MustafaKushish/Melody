@@ -64,9 +64,9 @@
   <section id="now-playing" class="now-playing" hidden aria-label="Aktuelle Wiedergabe">
     <div class="np-bg" id="np-bg"><i></i><i></i><i></i></div>
     <header class="np-head">
-      <button class="icon-btn" data-action="close-np" aria-label="Schließen" data-icon="down"></button>
+      <button class="icon-btn" data-action="close-np" aria-label="Schließen" title="Schließen" data-icon="down"></button>
       <span class="np-context" id="np-context">Wird gespielt</span>
-      <button class="icon-btn" data-action="np-menu" aria-label="Mehr" data-icon="more"></button>
+      <button class="icon-btn" data-action="np-menu" aria-label="Mehr" title="Mehr" data-icon="more"></button>
     </header>
     <div class="np-art">
       <div class="np-stage" id="np-stage">
@@ -85,14 +85,14 @@
       <button class="icon-btn" data-action="fav-current" id="np-fav" aria-label="Favorit" data-icon="heartOutline"></button>
     </div>
     <div class="np-seek">
-      <input type="range" id="np-seek" min="0" max="1000" value="0" aria-valuemin="0" aria-valuemax="1000" aria-label="Position">
+      <input type="range" id="np-seek" min="0" max="1000" value="0" aria-valuemin="0" aria-valuemax="1000" aria-label="Position" title="Position">
       <div class="np-times"><span id="np-cur">0:00</span><span id="np-dur">0:00</span></div>
     </div>
     <div class="np-controls">
       <button class="icon-btn" data-action="shuffle" id="np-shuffle" aria-label="Zufallswiedergabe" data-icon="shuffle"></button>
-      <button class="icon-btn lg" data-action="prev" aria-label="Zurück" data-icon="prev"></button>
-      <button class="icon-btn play xl" data-action="toggle" id="np-play" aria-label="Abspielen" data-icon="play"></button>
-      <button class="icon-btn lg" data-action="next" aria-label="Weiter" data-icon="next"></button>
+      <button class="icon-btn lg" data-action="prev" aria-label="Zurück" title="Zurück" data-icon="prev"></button>
+      <button class="icon-btn play xl" data-action="toggle" id="np-play" aria-label="Abspielen" title="Abspielen" data-icon="play"></button>
+      <button class="icon-btn lg" data-action="next" aria-label="Weiter" title="Weiter" data-icon="next"></button>
       <button class="icon-btn" data-action="repeat" id="np-repeat" aria-label="Wiederholen" data-icon="repeat"></button>
     </div>
     <div class="np-extra">
