@@ -230,7 +230,7 @@ function trackRows(tracks, opts = {}) {
         <div class="a">${t.favorite ? `<span class="heart">♥</span> ` : ''}${esc(t.artist)}${opts.noAlbum ? '' : ' · ' + esc(t.album)}</div>
       </div>
       <span class="dur"><span class="dl-slot">${statusBadge(t)}</span> ${fmt(t.duration)}</span>
-      <button class="icon-btn" data-action="track-menu" data-id="${t.id}" data-pl="${esc(opts.playlistId || '')}" data-index="${i}" aria-label="Optionen für ${esc(t.title)}">${icon('more')}</button>
+      <button class="icon-btn" data-action="track-menu" data-id="${t.id}" data-pl="${esc(opts.playlistId || '')}" data-index="${i}" aria-label="Optionen für ${esc(t.title)}" title="Optionen für ${esc(t.title)}">${icon('more')}</button>
     </div>`).join('')}</div>`;
 }
 
@@ -688,7 +688,7 @@ function queueSheet() {
       return `<div class="track q" data-action="q-jump" data-index="${i}" data-sort-item>
         <button class="drag-handle" data-drag data-action="drag-noop" aria-label="${esc(t.title)} verschieben (Pfeiltasten hoch/runter)">${icon('drag')}</button>${coverHTML(t, 'sm')}
         <div class="meta"><div class="t">${esc(t.title)}</div><div class="a">${esc(t.artist)}</div></div>
-        <button class="icon-btn" data-action="q-remove" data-index="${i}" aria-label="${esc(t.title)} entfernen">${icon('close')}</button></div>`;
+        <button class="icon-btn" data-action="q-remove" data-index="${i}" aria-label="${esc(t.title)} entfernen" title="${esc(t.title)} entfernen">${icon('close')}</button></div>`;
     }).join('')}</div>` : '<p class="muted" style="padding:0 8px">Die Warteschlange ist leer.</p>'}
     ${q.length - player.index - 1 > 100 ? `<p class="muted" style="padding:0 8px">… und ${q.length - player.index - 101} weitere</p>` : ''}`);
 }
