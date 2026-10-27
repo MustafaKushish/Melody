@@ -13,3 +13,7 @@
 ## 2026-10-24 - Static ARIA Labels with Dynamic ARIA Value Text for Range Inputs
 **Learning:** Range inputs (`<input type="range">`) should keep a static `aria-label` (e.g. "Lautstärke") and use `aria-valuenow` / `aria-valuetext` for value updates to prevent redundant announcements in screen readers.
 **Action:** Avoid interpolating current values into `aria-label` on range controls when `aria-valuetext` is already configured.
+
+## 2026-10-25 - Converting Interactive Player Containers to Semantic Buttons with Track Context
+**Learning:** Interactive containers in player bars that open modal views (e.g., Now Playing) must be semantic `<button>` elements with CSS resets. Dynamically updating their `aria-label` and `title` with current track metadata gives screen reader and keyboard users clear context about what action opening the full-screen view performs.
+**Action:** Use standard `<button>` elements for player bar track containers and update `aria-label` and `title` dynamically when updating player UI state.

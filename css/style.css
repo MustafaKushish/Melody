@@ -293,6 +293,7 @@ select.input { padding-left: 14px; width: auto; }
 .pb-progress { position: absolute; left: 0; right: 0; top: -1px; height: 3px; background: transparent; }
 .pb-progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
 .pb-left { display: flex; align-items: center; gap: 12px; min-width: 0; cursor: pointer; }
+button.pb-left { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; }
 .pb-left .meta { min-width: 0; }
 .pb-center { display: flex; align-items: center; gap: 6px; }
 .pb-right { display: flex; align-items: center; gap: 8px; justify-content: flex-end; color: var(--text-2); }
