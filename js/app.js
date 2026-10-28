@@ -532,11 +532,12 @@ function stationRows(list) {
     state.stations.set(s.id, s);
     const fav = radioFavs.some((f) => f.id === s.id);
     const playing = player.mode === 'radio' && player.station?.id === s.id;
+    const favLabel = `${fav ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}: ${esc(s.name)}`;
     return `<div class="track station${playing ? ' current' : ''}" data-action="play-station" data-sid="${esc(s.id)}" data-id="${esc(s.id)}">
       <div class="cover sm">${s.favicon ? `<img src="${esc(s.favicon)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${icon('radio')}</div>
       <div class="meta"><div class="t">${esc(s.name)}</div>
         <div class="a">${esc([s.country, s.tags, s.bitrate ? s.bitrate + ' kbps' : ''].filter(Boolean).join(' · '))}</div></div>
-      <button class="icon-btn${fav ? ' fav' : ''}" data-action="radio-fav" data-sid="${esc(s.id)}" aria-label="${fav ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}" aria-pressed="${fav ? 'true' : 'false'}">${icon(fav ? 'heart' : 'heartOutline')}</button>
+      <button class="icon-btn${fav ? ' fav' : ''}" data-action="radio-fav" data-sid="${esc(s.id)}" aria-label="${favLabel}" title="${favLabel}" aria-pressed="${fav ? 'true' : 'false'}">${icon(fav ? 'heart' : 'heartOutline')}</button>
     </div>`;
   }).join('')}</div>`;
 }
