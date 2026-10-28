@@ -177,12 +177,13 @@ export function viewDiscover() {
   if (!catalog.length) return `<h1>Entdecken</h1><div class="empty">Der Katalog ist gerade nicht erreichbar${navigator.onLine ? '' : ' (offline)'}.</div>`;
   const rows = catalog.map((c, i) => {
     const t = getTrack(catalogId(c.id));
+    const dlLabel = `${t?.downloaded ? 'Download entfernen' : 'Herunterladen'}: ${esc(c.title)}`;
     return `<div class="track${t && !playable(t) ? ' unavailable' : ''}" data-action="cat-play" data-key="all" data-index="${i}" data-id="${catalogId(c.id)}">
       <span class="num">${i + 1}</span>
       <div class="cover sm"><img src="catalog/${esc(c.cover)}" alt="" loading="lazy"></div>
       <div class="meta"><div class="t">${esc(c.title)}</div><div class="a">${esc(c.artist)} · ${esc(c.genre)}</div></div>
       <span class="dur"><span class="dl-slot">${t ? statusBadge(t) : ''}</span> ${fmt(c.duration)}</span>
-      <button class="icon-btn" data-action="cat-download" data-index="${i}" aria-label="Herunterladen">${icon(t?.downloaded ? 'downloadDone' : 'download')}</button>
+      <button class="icon-btn" data-action="cat-download" data-index="${i}" aria-label="${dlLabel}" title="${dlLabel}">${icon(t?.downloaded ? 'downloadDone' : 'download')}</button>
     </div>`;
   }).join('');
   const total = catalog.reduce((s, c) => s + (c.size || 0), 0);
