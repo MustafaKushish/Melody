@@ -1009,8 +1009,23 @@ function updateState() {
     b.setAttribute('title', label);
     setIcon(b, player.repeat === 'one' ? 'repeatOne' : 'repeat');
   }
-  $('#np-speed').textContent = String(player.mode === 'podcast' ? player.settings.podRate || 1 : player.settings.rate).replace('.', ',') + '×';
-  $('#np-sleep').textContent = player.sleepUntil ? `${Math.ceil((player.sleepUntil - Date.now()) / 60000)} Min.` : player.sleepAtEnd ? 'Titelende' : 'Sleep';
+  const pod = player.mode === 'podcast';
+  const speedStr = String(pod ? player.settings.podRate || 1 : player.settings.rate).replace('.', ',') + '×';
+  $('#np-speed').textContent = speedStr;
+  const speedBtn = $('#now-playing [data-action=speed-menu]');
+  if (speedBtn) {
+    const speedLabel = `${pod ? 'Podcast-Geschwindigkeit' : 'Wiedergabegeschwindigkeit'}: ${speedStr}`;
+    speedBtn.setAttribute('aria-label', speedLabel);
+    speedBtn.setAttribute('title', speedLabel);
+  }
+  const sleepText = player.sleepUntil ? `${Math.ceil((player.sleepUntil - Date.now()) / 60000)} Min.` : player.sleepAtEnd ? (pod ? 'Ende der Folge' : 'Titelende') : '';
+  $('#np-sleep').textContent = sleepText || 'Sleep';
+  const sleepBtn = $('#now-playing [data-action=sleep-menu]');
+  if (sleepBtn) {
+    const sleepLabel = sleepText ? `Sleep-Timer: ${sleepText}` : 'Sleep-Timer';
+    sleepBtn.setAttribute('aria-label', sleepLabel);
+    sleepBtn.setAttribute('title', sleepLabel);
+  }
   playingChanged();
   if (playing) startViz();
 }
