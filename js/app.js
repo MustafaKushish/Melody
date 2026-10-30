@@ -412,7 +412,7 @@ function viewLibrary() {
       <button class="btn" data-action="import">${icon('add')}<span class="hide-sm">Hinzufügen</span></button></div>
     <div class="tabs">${tabs.map(([id, l]) => `<button class="chip${tab === id ? ' on' : ''}" data-action="nav" data-view="library" data-param="${id}">${l}</button>`).join('')}</div>
     <div class="row" style="margin-bottom:16px">
-      <label class="search">${icon('search')}<input class="input" id="lib-search" type="search" placeholder="Titel, Künstler, Alben, Genres …" value="${esc(state.libQuery)}" autocomplete="off"></label>
+      <label class="search">${icon('search')}<input class="input" id="lib-search" type="search" placeholder="Titel, Künstler, Alben, Genres …" value="${esc(state.libQuery)}" autocomplete="off" aria-label="Bibliothek durchsuchen"></label>
       ${showSort ? `<div class="row nowrap"><select class="input" id="lib-sort" aria-label="Sortierung">
         ${[['title', 'Titel A–Z'], ['artist', 'Künstler'], ['added', 'Zuletzt hinzugefügt'], ['plays', 'Meistgehört'], ['duration', 'Länge']]
           .map(([v, l]) => `<option value="${v}"${state.libSort === v ? ' selected' : ''}>${l}</option>`).join('')}
@@ -556,7 +556,7 @@ function viewRadio() {
   const title = r.query ? `Ergebnisse für „${esc(r.query)}“` : r.tag ? esc(r.tag) : 'Beliebt in Deutschland';
   return `<h1>Radio</h1><p class="sub">Tausende Live-Sender weltweit – kostenlos und ohne Anmeldung.</p>
     <form class="row" data-form="radio-search" style="margin-bottom:12px">
-      <label class="search">${icon('search')}<input class="input" id="radio-q" type="search" placeholder="Sender suchen …" value="${esc(r.query)}"></label>
+      <label class="search">${icon('search')}<input class="input" id="radio-q" type="search" placeholder="Sender suchen …" value="${esc(r.query)}" aria-label="Radiosender suchen"></label>
     </form>
     <div class="tabs">${RADIO_TAGS.map((t) => `<button class="chip${r.tag === t ? ' on' : ''}" data-action="radio-tag" data-tag="${t}">${t}</button>`).join('')}</div>
     ${radioFavs.length ? `<h2>Deine Sender</h2>${stationRows(radioFavs)}` : ''}
@@ -578,11 +578,11 @@ function viewSettings() {
   return `<h1>Einstellungen</h1><p class="sub">Melody ${VERSION} · werbefrei · kein Tracking</p>
     ${install ? `<div class="panel"><h3>Als App installieren</h3><p>Melody läuft auf Smartphone, Tablet und Computer – wie eine native App, mit Offline-Modus.</p>${install}</div>` : ''}
     <div class="panel"><h3>Darstellung</h3>
-      <div class="setting"><span>Design</span><div class="row">
-        ${[['dark', 'Dunkel'], ['light', 'Hell'], ['auto', 'System']].map(([v, l]) => `<button class="chip${ui.theme === v ? ' on' : ''}" data-action="theme" data-theme="${v}">${l}</button>`).join('')}
+      <div class="setting"><span>Design</span><div class="row" role="group" aria-label="Design">
+        ${[['dark', 'Dunkel'], ['light', 'Hell'], ['auto', 'System']].map(([v, l]) => `<button class="chip${ui.theme === v ? ' on' : ''}" data-action="theme" data-theme="${v}" aria-pressed="${ui.theme === v}">${l}</button>`).join('')}
       </div></div>
-      <div class="setting"><span>Akzentfarbe</span><div class="swatches">
-        ${ACCENTS.map((c) => `<button class="swatch${ui.accent === c ? ' on' : ''}" style="--c:${c}" data-action="accent" data-color="${c}" aria-label="Farbe ${c}"></button>`).join('')}
+      <div class="setting"><span>Akzentfarbe</span><div class="swatches" role="group" aria-label="Akzentfarbe">
+        ${ACCENTS.map((c) => `<button class="swatch${ui.accent === c ? ' on' : ''}" style="--c:${c}" data-action="accent" data-color="${c}" aria-label="Farbe ${c}" aria-pressed="${ui.accent === c}"></button>`).join('')}
       </div></div>
     </div>
     <div class="panel" id="a11y-panel"><h3>${icon('accessibility')} Barrierefreiheit</h3>
