@@ -131,9 +131,15 @@ function resultHTML() {
 
 function renderResult() {
   const el = $('#ai-result');
-  if (!el) return;
-  el.innerHTML = resultHTML();
-  hydrateIcons(el);
+  if (el) {
+    el.innerHTML = resultHTML();
+    hydrateIcons(el);
+  }
+  const btn = $('.ai-ask button');
+  if (btn) {
+    btn.disabled = ai.loading;
+    btn.textContent = ai.loading ? 'Wird erstellt …' : 'Mix erstellen';
+  }
 }
 
 export function viewForYou() {
@@ -143,8 +149,8 @@ export function viewForYou() {
     <p class="sub">Sag Melody, wonach dir ist – die KI stellt aus deiner Musik den perfekten Mix zusammen und empfiehlt dir Neues.</p>
     <form class="ai-ask" data-form="ai">
       ${icon('sparkle')}
-      <input class="input plain" name="prompt" placeholder="z. B. „Etwas für einen sonnigen Sonntagmorgen“" value="${esc(ai.prompt)}" maxlength="300" autocomplete="off">
-      <button class="btn btn-primary">Mix erstellen</button>
+      <input class="input plain" name="prompt" placeholder="z. B. „Etwas für einen sonnigen Sonntagmorgen“" value="${esc(ai.prompt)}" maxlength="300" autocomplete="off" aria-label="Stimmung oder Musikwunsch">
+      <button class="btn btn-primary" ${ai.loading ? 'disabled' : ''}>${ai.loading ? 'Wird erstellt …' : 'Mix erstellen'}</button>
     </form>
     <div class="tabs moods">${Object.entries(MOODS).map(([name, m]) => `<button class="chip${ai.mood === name ? ' on' : ''}${!ai.result && name === suggestion ? ' suggest' : ''}" data-action="ai-mood" data-mood="${name}">${m.emoji} ${name}</button>`).join('')}</div>
     <div id="ai-result">${state.tracks.length ? resultHTML() : '<div class="empty">Importiere zuerst Musik, damit Melody deinen Geschmack kennenlernt.</div>'}</div>`;
