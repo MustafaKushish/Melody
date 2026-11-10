@@ -17,3 +17,7 @@
 ## 2026-10-25 - Converting Interactive Player Containers to Semantic Buttons with Track Context
 **Learning:** Interactive containers in player bars that open modal views (e.g., Now Playing) must be semantic `<button>` elements with CSS resets. Dynamically updating their `aria-label` and `title` with current track metadata gives screen reader and keyboard users clear context about what action opening the full-screen view performs.
 **Action:** Use standard `<button>` elements for player bar track containers and update `aria-label` and `title` dynamically when updating player UI state.
+
+## 2026-10-28 - ARIA Pressed States on Option Group Swatches and Explicit Input Labels
+**Learning:** Selection chips and swatch buttons in option groups (such as theme and accent color selectors) need explicit `aria-pressed="true|false"` attributes so screen reader users perceive the active state. Search inputs relying solely on placeholders need explicit `aria-label`s for screen reader announcements.
+**Action:** Always add `aria-pressed` to active option group toggle buttons and ensure search inputs carry explicit `aria-label` attributes.

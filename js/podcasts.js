@@ -317,7 +317,7 @@ export function viewPodcasts() {
   return `<h1>Podcasts</h1>
     <p class="sub">Alle Podcasts der Welt – abonnieren, herunterladen, offline hören. Melody merkt sich, wo du warst.</p>
     <form class="row nowrap" data-form="pod-search" style="margin-bottom:12px">
-      <label class="search">${icon('search')}<input class="input" id="pod-q" type="search" placeholder="Podcast suchen …" value="${esc(s.q)}" autocomplete="off"></label>
+      <label class="search">${icon('search')}<input class="input" id="pod-q" type="search" placeholder="Podcast suchen …" value="${esc(s.q)}" autocomplete="off" aria-label="Podcasts suchen"></label>
     </form>
     <div class="tabs">${GENRES.map((g) => `<button class="chip${s.q === g ? ' on' : ''}" data-action="pod-genre" data-q="${g}">${g}</button>`).join('')}</div>
     ${s.loading ? '<div class="empty">Suche läuft …</div>' : s.error ? `<div class="empty">${esc(s.error)}</div>` : s.results ? `
